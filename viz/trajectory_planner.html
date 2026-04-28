@@ -15,7 +15,6 @@
             overflow: hidden;
         }
 
-        /* Sidebar UI */
         #sidebar {
             width: 320px;
             background: #14141d;
@@ -86,7 +85,6 @@
         .stat-label { color: #888; }
         .stat-value { font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
 
-        /* Canvas Area */
         #main-view {
             flex: 1;
             position: relative;
@@ -104,7 +102,6 @@
             border-radius: 4px;
         }
 
-        /* Target Reticle */
         #reticle {
             position: fixed;
             width: 40px; height: 40px;
@@ -132,8 +129,9 @@
         .hud-overlay p {
             font-family: monospace;
             font-size: 12px;
-            color: rgba(255,255,255,0.6);
+            color: rgba(255,255,255,0.8);
             margin-bottom: 4px;
+            text-shadow: 1px 1px 2px #000;
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -149,7 +147,7 @@
             It is inefficient to survey the entire forest. Draw a path with your mouse to target <span class="highlight-text">canopy boundaries</span> and <span class="highlight-text">density gradients</span> where fire behavior changes rapidly.
         </div>
 
-        <button class="btn" id="btn-ai-path" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #10b981;">✨ Auto-Generate AI Path</button>
+        <button class="btn" id="btn-ai-path" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #10b981;">✨ Generate Survey (Computer Vision)</button>
         <button class="btn" id="btn-clear">Clear Trajectory</button>
         <button class="btn btn-primary" id="btn-deploy">Deploy Rover</button>
 
@@ -175,9 +173,9 @@
 
     <div id="main-view">
         <div class="hud-overlay">
-            <p>SAT-LINK: ACTIVE</p>
+            <p>SAT-LINK: SENTINEL-2 RGB RASTER</p>
             <p>LAT: 36.7032° N | LON: 3.0041° E</p>
-            <p>ALTITUDE: 150m AGL</p>
+            <p>RESOLUTION: 0.5m / pixel</p>
         </div>
         <div id="reticle"></div>
         <canvas id="missionCanvas" width="900" height="700"></canvas>
@@ -185,7 +183,7 @@
 
 <script>
 const canvas = document.getElementById('missionCanvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
 const reticle = document.getElementById('reticle');
 
 // --- State ---
@@ -195,109 +193,139 @@ let path = [];
 let animProgress = 0;
 let roverPos = null;
 
-const SWATH_WIDTH = 45; // Pixel width of the sensor collection area
-const ROVER_SPEED = 3.0; // Pixels per frame
+const SWATH_WIDTH = 45; 
+const ROVER_SPEED = 3.0; 
 
-// --- Procedural Satellite Generation ---
+// --- Satellite Image Loading ---
 const satCanvas = document.createElement('canvas');
 satCanvas.width = canvas.width;
 satCanvas.height = canvas.height;
-const satCtx = satCanvas.getContext('2d');
+const satCtx = satCanvas.getContext('2d', { willReadFrequently: true });
 
-function getNoise(x, y) {
-    const nx = x / 150;
-    const ny = y / 150;
-    return Math.sin(nx) * Math.cos(ny) + 0.5 * Math.sin(nx * 2 + ny) + 0.25 * Math.sin(nx * 5 + ny * 5);
-}
-
-function generateSatelliteMap() {
+function generateProceduralFallback() {
     const imgData = satCtx.createImageData(satCanvas.width, satCanvas.height);
     const data = imgData.data;
 
     for (let y = 0; y < satCanvas.height; y++) {
         for (let x = 0; x < satCanvas.width; x++) {
-            let e = getNoise(x, y);
+            const nx = x / 150; const ny = y / 150;
+            let e = Math.sin(nx)*Math.cos(ny) + 0.5*Math.sin(nx*2+ny) + 0.25*Math.sin(nx*5+ny*5);
             let r, g, b;
 
             if (e > 0.4) {
-                // Dense Canopy (Dark Green)
-                r = 25 + Math.random()*10; g = 50 + Math.random()*15; b = 30 + Math.random()*10;
+                r = 25+Math.random()*10; g = 50+Math.random()*15; b = 30+Math.random()*10;
             } else if (e > -0.2) {
-                // Medium Canopy (Forest Green)
-                r = 45 + Math.random()*15; g = 80 + Math.random()*20; b = 40 + Math.random()*15;
+                r = 45+Math.random()*15; g = 80+Math.random()*20; b = 40+Math.random()*15;
             } else if (e > -0.6) {
-                // Sparse Brush (Olive/Brownish)
-                r = 100 + Math.random()*20; g = 110 + Math.random()*20; b = 70 + Math.random()*15;
+                r = 100+Math.random()*20; g = 110+Math.random()*20; b = 70+Math.random()*15;
             } else {
-                // Clearings / Dirt (Brown/Tan)
-                r = 140 + Math.random()*20; g = 130 + Math.random()*20; b = 100 + Math.random()*15;
+                r = 140+Math.random()*20; g = 130+Math.random()*20; b = 100+Math.random()*15;
             }
-
             const i = (y * satCanvas.width + x) * 4;
             data[i] = r; data[i+1] = g; data[i+2] = b; data[i+3] = 255;
         }
     }
     satCtx.putImageData(imgData, 0, 0);
-
-    // Soft lighting / shadows
-    satCtx.fillStyle = 'rgba(0,0,0,0.1)';
-    for(let i=0; i<100; i++) {
-        satCtx.beginPath();
-        satCtx.arc(Math.random()*satCanvas.width, Math.random()*satCanvas.height, 20+Math.random()*50, 0, Math.PI*2);
-        satCtx.fill();
-    }
 }
-generateSatelliteMap();
 
-// --- AI Auto-Path Generation ---
+// Attempt to load a real satellite forest image
+const img = new Image();
+img.crossOrigin = "Anonymous";
+// Real top-down forest from Unsplash
+img.src = "https://images.unsplash.com/photo-1542272201-b1ca555f8505?q=80&w=1000&auto=format&fit=crop";
+
+img.onload = () => {
+    // Fill canvas
+    const scale = Math.max(satCanvas.width / img.width, satCanvas.height / img.height);
+    const w = img.width * scale;
+    const h = img.height * scale;
+    satCtx.drawImage(img, (satCanvas.width - w)/2, (satCanvas.height - h)/2, w, h);
+};
+
+img.onerror = () => {
+    console.warn("CORS or network error loading real satellite image. Using procedural fallback.");
+    generateProceduralFallback();
+};
+
+
+// --- Advanced AI Engine: Computer Vision Edge Sweep ---
 function generateAIPath() {
     isDeployed = false;
     animProgress = 0;
     
-    // 1. Edge Detection Scan
-    const step = 25;
-    let edgePoints = [];
+    // 1. Read real pixel data from the satellite background
+    let imgData;
+    try {
+        imgData = satCtx.getImageData(0, 0, canvas.width, canvas.height);
+    } catch (e) {
+        console.error("Canvas tainted, using fallback generation...");
+        generateProceduralFallback();
+        imgData = satCtx.getImageData(0, 0, canvas.width, canvas.height);
+    }
     
-    for(let y = step; y < canvas.height - step; y += step) {
-        for(let x = step; x < canvas.width - step; x += step) {
-            const current = getNoise(x, y);
-            const right = getNoise(x+step, y);
-            const down = getNoise(x, y+step);
-            
-            // Identify high-contrast boundaries (density gradients)
-            if (Math.abs(current - right) > 0.35 || Math.abs(current - down) > 0.35) {
-                edgePoints.push({x, y});
-            }
+    const data = imgData.data;
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // 2. Convert to Luminance (Grayscale)
+    const lum = new Float32Array(width * height);
+    for (let i = 0; i < data.length; i += 4) {
+        lum[i/4] = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+    }
+
+    // 3. Sobel-like Edge Detection (Finds canopy borders)
+    const edge = new Float32Array(width * height);
+    for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+            const idx = y * width + x;
+            const dx = lum[idx+1] - lum[idx-1];
+            const dy = lum[idx+width] - lum[idx-width];
+            edge[idx] = Math.sqrt(dx*dx + dy*dy);
         }
     }
 
-    // 2. Greedy Trajectory Assembly
-    if (edgePoints.length === 0) return;
+    // 4. "U-Shape Sweep" Path Planning
+    // It scans horizontally, but dynamically adjusts its vertical position 
+    // to "hunt" for the highest contrast canopy edges in its sector.
+    let newPath = [];
+    const stepX = 70;
+    const padding = 40;
     
-    let currentPt = edgePoints[0];
-    let newPath = [currentPt];
-    edgePoints.splice(0, 1);
-    
-    // Pick the ~25 most relevant edge points to form a smooth survey route
-    while(edgePoints.length > 0 && newPath.length < 25) {
-        let nearestIdx = 0;
-        let minDist = Infinity;
-        for(let i=0; i<edgePoints.length; i++) {
-            const d = Math.hypot(edgePoints[i].x - currentPt.x, edgePoints[i].y - currentPt.y);
-            // Penalize points that are too close to encourage broad exploration
-            const score = d < 40 ? d + 1000 : d; 
-            if(score < minDist) {
-                minDist = score;
-                nearestIdx = i;
+    // Forward Sweep (Top Half of the map)
+    for (let x = padding; x <= width - padding; x += stepX) {
+        let bestY = padding;
+        let maxEdge = 0;
+        // Search vertical column
+        for (let y = padding; y < height/2; y += 5) {
+            const val = edge[y * width + x];
+            if (val > maxEdge) {
+                maxEdge = val;
+                bestY = y;
             }
         }
-        
-        currentPt = edgePoints[nearestIdx];
-        newPath.push(currentPt);
-        edgePoints.splice(nearestIdx, 1);
+        newPath.push({x: x, y: bestY});
     }
-    
-    // 3. Smooth the path using Chaikin's Corner Cutting
+
+    // Step down at the right boundary
+    const rightX = newPath[newPath.length-1].x;
+    newPath.push({x: rightX, y: height/2});
+
+    // Backward Sweep (Bottom Half of the map)
+    for (let x = rightX; x >= padding; x -= stepX) {
+        let bestY = height - padding;
+        let maxEdge = 0;
+        // Search vertical column
+        for (let y = height/2; y < height - padding; y += 5) {
+            const val = edge[y * width + x];
+            if (val > maxEdge) {
+                maxEdge = val;
+                bestY = y;
+            }
+        }
+        newPath.push({x: x, y: bestY});
+    }
+
+    // 5. Curve Smoothing (Catmull-Rom / Chaikin)
     for (let it = 0; it < 3; it++) {
         let smoothed = [];
         for (let i = 0; i < newPath.length - 1; i++) {
@@ -335,13 +363,11 @@ canvas.addEventListener('mousedown', (e) => {
 canvas.addEventListener('mousemove', (e) => {
     const pos = getMousePos(e);
     
-    // Fixed reticle positioning prevents offset errors
     reticle.style.display = 'flex';
     reticle.style.left = (e.clientX - 20) + 'px';
     reticle.style.top = (e.clientY - 20) + 'px';
 
     if (isDrawing && !isDeployed) {
-        // Prevent drawing too many points too close together
         const last = path[path.length - 1];
         if (Math.hypot(pos.x - last.x, pos.y - last.y) > 5) {
             path.push(pos);
@@ -398,7 +424,6 @@ function getPointAtDistance(targetDist) {
 
 function updateStats() {
     const len = getPathLength(path);
-    // Rough scale: 1 px = 0.5 meters
     const meters = (len * 0.5).toFixed(1);
     const area = (len * SWATH_WIDTH * 0.25).toFixed(0);
     
@@ -449,16 +474,13 @@ function drawPath(points, color, width, isDashed = false) {
 }
 
 function animate() {
-    // 1. Draw Satellite Map
     ctx.drawImage(satCanvas, 0, 0);
 
     if (path.length > 1) {
         const totalLen = getPathLength(path);
 
-        // 2. Draw Future Preview (Grey transparent swath)
+        // Preview Swath
         drawPath(path, 'rgba(255, 255, 255, 0.15)', SWATH_WIDTH);
-        
-        // Center dashed line
         drawPath(path, 'rgba(255, 255, 255, 0.5)', 2, true);
 
         if (isDeployed) {
@@ -469,7 +491,6 @@ function animate() {
                 document.getElementById('s-status').style.color = '#3b82f6';
             }
 
-            // Calculate collected subpath
             const collectedPoints = [path[0]];
             let currentDist = 0;
             for (let i = 1; i < path.length; i++) {
@@ -490,26 +511,21 @@ function animate() {
                 }
             }
 
-            // 3. Draw Collected Swath (Blue highly visible swath)
+            // Collected Swath
             drawPath(collectedPoints, 'rgba(59, 130, 246, 0.4)', SWATH_WIDTH);
-            
-            // Center solid line
             drawPath(collectedPoints, '#3b82f6', 2);
 
-            // 4. Draw Rover
+            // Rover
             roverPos = getPointAtDistance(animProgress);
-            
             ctx.save();
             ctx.translate(roverPos.x, roverPos.y);
             ctx.rotate(roverPos.angle);
             
-            // Rover Body
             ctx.fillStyle = '#fff';
             ctx.beginPath();
             ctx.roundRect(-8, -6, 16, 12, 3);
             ctx.fill();
             
-            // Sensor Sweep effect
             ctx.fillStyle = 'rgba(59, 130, 246, 0.8)';
             ctx.beginPath();
             ctx.moveTo(8, 0);
@@ -519,7 +535,6 @@ function animate() {
 
             ctx.restore();
 
-            // Update points metric
             document.getElementById('s-points').textContent = Math.floor(animProgress * 0.1);
         }
     }
