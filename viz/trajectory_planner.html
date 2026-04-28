@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BurnTrack — Autonomous Trajectory Planning</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+        
+        body {
+            background-color: #0d0d12;
+            color: #fff;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar UI */
+        #sidebar {
+            width: 320px;
+            background: #14141d;
+            border-right: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            box-shadow: 5px 0 20px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+        
+        .subtitle { font-size: 12px; color: #888; margin-bottom: 24px; letter-spacing: 0.5px; }
+
+        .instruction {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #d1d5db;
+        }
+
+        .highlight-text { color: #60a5fa; font-weight: 600; }
+
+        .btn {
+            background: #2a2a35;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn:hover { background: #3a3a45; }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: none;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4); }
+
+        .stats-panel {
+            margin-top: auto;
+            background: #0d0d12;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; }
+        .stat-label { color: #888; }
+        .stat-value { font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
+
+        /* Canvas Area */
+        #main-view {
+            flex: 1;
+            position: relative;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: crosshair;
+        }
+
+        canvas {
+            display: block;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+
+        /* Target Reticle */
+        #reticle {
+            position: absolute;
+            width: 40px; height: 40px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            display: none;
+        }
+        #reticle::after {
+            content: '';
+            width: 4px; height: 4px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .hud-overlay {
+            position: absolute;
+            top: 20px; left: 20px;
+            pointer-events: none;
+        }
+        .hud-overlay p {
+            font-family: monospace;
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 4px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="sidebar">
+        <h1>BurnTrack</h1>
+        <div class="subtitle">Autonomous Mission Planner</div>
+
+        <div class="instruction">
+            <strong>Targeted Data Collection</strong><br><br>
+            It is inefficient to survey the entire forest. Draw a path with your mouse to target <span class="highlight-text">canopy boundaries</span> and <span class="highlight-text">density gradients</span> where fire behavior changes rapidly.
+        </div>
+
+        <button class="btn" id="btn-clear">Clear Trajectory</button>
+        <button class="btn btn-primary" id="btn-deploy">Deploy Rover</button>
+
+        <div class="stats-panel">
+            <div class="stat-row">
+                <span class="stat-label">Status</span>
+                <span class="stat-value" id="s-status" style="color:#f7c948">AWAITING PATH</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Path Length</span>
+                <span class="stat-value" id="s-length">0 m</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Area Scanned</span>
+                <span class="stat-value" id="s-area">0 m²</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Data Points</span>
+                <span class="stat-value" id="s-points">0</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-view">
+        <div class="hud-overlay">
+            <p>SAT-LINK: ACTIVE</p>
+            <p>LAT: 36.7032° N | LON: 3.0041° E</p>
+            <p>ALTITUDE: 150m AGL</p>
+        </div>
+        <div id="reticle"></div>
+        <canvas id="missionCanvas" width="900" height="700"></canvas>
+    </div>
+
+<script>
+const canvas = document.getElementById('missionCanvas');
+const ctx = canvas.getContext('2d');
+const reticle = document.getElementById('reticle');
+
+// --- State ---
+let isDrawing = false;
+let isDeployed = false;
+let path = [];
+let animProgress = 0;
+let roverPos = null;
+
+const SWATH_WIDTH = 45; // Pixel width of the sensor collection area
+const ROVER_SPEED = 3.0; // Pixels per frame
+
+// --- Procedural Satellite Generation ---
+const satCanvas = document.createElement('canvas');
+satCanvas.width = canvas.width;
+satCanvas.height = canvas.height;
+const satCtx = satCanvas.getContext('2d');
+
+function generateSatelliteMap() {
+    // Generate base terrain using pseudo-noise
+    const imgData = satCtx.createImageData(satCanvas.width, satCanvas.height);
+    const data = imgData.data;
+
+    for (let y = 0; y < satCanvas.height; y++) {
+        for (let x = 0; x < satCanvas.width; x++) {
+            const nx = x / 150;
+            const ny = y / 150;
+            
+            // Complex noise
+            let e = Math.sin(nx) * Math.cos(ny) + 
+                    0.5 * Math.sin(nx * 2 + ny) + 
+                    0.25 * Math.sin(nx * 5 + ny * 5);
+            
+            let r, g, b;
+
+            if (e > 0.4) {
+                // Dense Canopy (Dark Green)
+                r = 25 + Math.random()*10;
+                g = 50 + Math.random()*15;
+                b = 30 + Math.random()*10;
+            } else if (e > -0.2) {
+                // Medium Canopy (Forest Green)
+                r = 45 + Math.random()*15;
+                g = 80 + Math.random()*20;
+                b = 40 + Math.random()*15;
+            } else if (e > -0.6) {
+                // Sparse Brush (Olive/Brownish)
+                r = 100 + Math.random()*20;
+                g = 110 + Math.random()*20;
+                b = 70 + Math.random()*15;
+            } else {
+                // Clearings / Dirt (Brown/Tan)
+                r = 140 + Math.random()*20;
+                g = 130 + Math.random()*20;
+                b = 100 + Math.random()*15;
+            }
+
+            const i = (y * satCanvas.width + x) * 4;
+            data[i]   = r;
+            data[i+1] = g;
+            data[i+2] = b;
+            data[i+3] = 255;
+        }
+    }
+    satCtx.putImageData(imgData, 0, 0);
+
+    // Add some soft lighting / shadows for canopy depth
+    satCtx.fillStyle = 'rgba(0,0,0,0.1)';
+    for(let i=0; i<100; i++) {
+        satCtx.beginPath();
+        satCtx.arc(Math.random()*satCanvas.width, Math.random()*satCanvas.height, 20+Math.random()*50, 0, Math.PI*2);
+        satCtx.fill();
+    }
+}
+generateSatelliteMap();
+
+// --- Drawing Interaction ---
+function getMousePos(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+    };
+}
+
+canvas.addEventListener('mousedown', (e) => {
+    if (isDeployed) return;
+    isDrawing = true;
+    path = [getMousePos(e)];
+    document.getElementById('s-status').textContent = 'PLANNING...';
+    document.getElementById('s-status').style.color = '#f7c948';
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    const pos = getMousePos(e);
+    
+    // Custom reticle
+    reticle.style.display = 'flex';
+    reticle.style.left = (e.clientX - 20) + 'px';
+    reticle.style.top = (e.clientY - 20) + 'px';
+
+    if (isDrawing && !isDeployed) {
+        path.push(pos);
+        updateStats();
+    }
+});
+
+canvas.addEventListener('mouseup', () => {
+    if (isDrawing) {
+        isDrawing = false;
+        document.getElementById('s-status').textContent = 'READY TO DEPLOY';
+        document.getElementById('s-status').style.color = '#3b82f6';
+    }
+});
+
+canvas.addEventListener('mouseleave', () => {
+    isDrawing = false;
+    reticle.style.display = 'none';
+});
+
+// --- Calculations ---
+function getPathLength(points) {
+    let len = 0;
+    for (let i = 1; i < points.length; i++) {
+        const dx = points[i].x - points[i-1].x;
+        const dy = points[i].y - points[i-1].y;
+        len += Math.sqrt(dx*dx + dy*dy);
+    }
+    return len;
+}
+
+function getPointAtDistance(targetDist) {
+    let currentDist = 0;
+    for (let i = 1; i < path.length; i++) {
+        const p1 = path[i-1];
+        const p2 = path[i];
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const segmentLen = Math.sqrt(dx*dx + dy*dy);
+        
+        if (currentDist + segmentLen >= targetDist) {
+            const ratio = (targetDist - currentDist) / segmentLen;
+            return {
+                x: p1.x + dx * ratio,
+                y: p1.y + dy * ratio,
+                angle: Math.atan2(dy, dx)
+            };
+        }
+        currentDist += segmentLen;
+    }
+    return { ...path[path.length - 1], angle: 0 };
+}
+
+function updateStats() {
+    const len = getPathLength(path);
+    // Rough scale: 1 px = 0.5 meters
+    const meters = (len * 0.5).toFixed(1);
+    const area = (len * SWATH_WIDTH * 0.25).toFixed(0);
+    
+    document.getElementById('s-length').textContent = meters + ' m';
+    document.getElementById('s-area').textContent = area + ' m²';
+}
+
+// --- Buttons ---
+document.getElementById('btn-clear').addEventListener('click', () => {
+    isDeployed = false;
+    path = [];
+    animProgress = 0;
+    document.getElementById('s-status').textContent = 'AWAITING PATH';
+    document.getElementById('s-status').style.color = '#f7c948';
+    updateStats();
+    document.getElementById('s-points').textContent = '0';
+});
+
+document.getElementById('btn-deploy').addEventListener('click', () => {
+    if (path.length > 1) {
+        isDeployed = true;
+        animProgress = 0;
+        document.getElementById('s-status').textContent = 'COLLECTING DATA...';
+        document.getElementById('s-status').style.color = '#10b981';
+    }
+});
+
+// --- Render Loop ---
+function drawPath(points, color, width, isDashed = false) {
+    if (points.length < 2) return;
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    if (isDashed) ctx.setLineDash([10, 15]);
+    else ctx.setLineDash([]);
+
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+}
+
+function animate() {
+    // 1. Draw Satellite Map
+    ctx.drawImage(satCanvas, 0, 0);
+
+    if (path.length > 1) {
+        const totalLen = getPathLength(path);
+
+        // 2. Draw Future Preview (Grey transparent swath)
+        drawPath(path, 'rgba(255, 255, 255, 0.15)', SWATH_WIDTH);
+        
+        // Center dashed line
+        drawPath(path, 'rgba(255, 255, 255, 0.5)', 2, true);
+
+        if (isDeployed) {
+            animProgress += ROVER_SPEED;
+            if (animProgress > totalLen) {
+                animProgress = totalLen;
+                document.getElementById('s-status').textContent = 'MISSION COMPLETE';
+                document.getElementById('s-status').style.color = '#3b82f6';
+            }
+
+            // Calculate collected subpath
+            const collectedPoints = [path[0]];
+            let currentDist = 0;
+            for (let i = 1; i < path.length; i++) {
+                const dx = path[i].x - path[i-1].x;
+                const dy = path[i].y - path[i-1].y;
+                const segLen = Math.sqrt(dx*dx + dy*dy);
+                
+                if (currentDist + segLen <= animProgress) {
+                    collectedPoints.push(path[i]);
+                    currentDist += segLen;
+                } else {
+                    const ratio = (animProgress - currentDist) / segLen;
+                    collectedPoints.push({
+                        x: path[i-1].x + dx * ratio,
+                        y: path[i-1].y + dy * ratio
+                    });
+                    break;
+                }
+            }
+
+            // 3. Draw Collected Swath (Blue highly visible swath)
+            drawPath(collectedPoints, 'rgba(59, 130, 246, 0.4)', SWATH_WIDTH);
+            
+            // Center solid line
+            drawPath(collectedPoints, '#3b82f6', 2);
+
+            // 4. Draw Rover
+            roverPos = getPointAtDistance(animProgress);
+            
+            ctx.save();
+            ctx.translate(roverPos.x, roverPos.y);
+            ctx.rotate(roverPos.angle);
+            
+            // Rover Body
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.roundRect(-8, -6, 16, 12, 3);
+            ctx.fill();
+            
+            // Sensor Sweep effect
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.8)';
+            ctx.beginPath();
+            ctx.moveTo(8, 0);
+            ctx.arc(8, 0, SWATH_WIDTH/2 + 5, -Math.PI/3, Math.PI/3);
+            ctx.lineTo(8, 0);
+            ctx.fill();
+
+            ctx.restore();
+
+            // Update points metric
+            document.getElementById('s-points').textContent = Math.floor(animProgress * 0.1);
+        }
+    }
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>
