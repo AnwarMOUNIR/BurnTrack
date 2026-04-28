@@ -42,8 +42,8 @@
         }
 
         #header h1 {
-            font-size: 18px;
-            font-weight: 700;
+            font-size: 20px;
+            font-weight: 800;
             letter-spacing: 1.5px;
             text-transform: uppercase;
             background: linear-gradient(135deg, #ff6b35, #f7c948);
@@ -52,34 +52,35 @@
         }
 
         #header .subtitle {
-            font-size: 12px;
-            color: #888;
-            margin-top: 2px;
+            font-size: 13px;
+            color: #aaa;
+            margin-top: 4px;
         }
 
         /* Controls panel */
         #controls {
-            bottom: 20px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 12px;
+            gap: 16px;
             align-items: center;
             background: rgba(20, 20, 30, 0.85);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 16px;
-            padding: 12px 24px;
+            padding: 16px 32px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         #controls button {
             background: rgba(255,107,53,0.15);
             border: 1px solid rgba(255,107,53,0.3);
             color: #ff6b35;
-            padding: 8px 20px;
+            padding: 10px 24px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
             letter-spacing: 0.5px;
             transition: all 0.2s;
@@ -95,93 +96,129 @@
             color: #0a0a0f;
         }
 
+        #controls button.special {
+            background: linear-gradient(135deg, #ff6b35, #f7c948);
+            color: #0a0a0f;
+            border: none;
+            box-shadow: 0 0 15px rgba(255,107,53,0.4);
+        }
+
         #step-display {
-            font-size: 14px;
-            color: #aaa;
-            min-width: 100px;
+            font-size: 15px;
+            color: #ccc;
+            min-width: 110px;
             text-align: center;
             font-variant-numeric: tabular-nums;
-        }
-
-        #speed-slider {
-            -webkit-appearance: none;
-            width: 100px;
-            height: 4px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 2px;
-            outline: none;
-        }
-
-        #speed-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 14px;
-            height: 14px;
-            background: #f7c948;
-            border-radius: 50%;
-            cursor: pointer;
+            font-weight: 600;
         }
 
         /* Stats panel */
         #stats {
             top: 80px;
-            right: 20px;
+            right: 24px;
             background: rgba(20, 20, 30, 0.85);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 12px;
-            padding: 16px 20px;
-            min-width: 200px;
+            padding: 20px;
+            min-width: 280px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         #stats h3 {
-            font-size: 11px;
+            font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            color: #666;
-            margin-bottom: 12px;
+            color: #888;
+            margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
         }
 
-        .stat-row {
+        /* Leaderboard for multi-risk */
+        .leaderboard-item {
+            margin-bottom: 12px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            border-left: 4px solid #444;
+            transition: all 0.3s;
+        }
+
+        .leaderboard-item .l-title {
+            font-size: 12px;
+            color: #aaa;
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 13px;
+            margin-bottom: 4px;
         }
 
-        .stat-label { color: #888; }
-        .stat-value { color: #f7c948; font-weight: 600; font-variant-numeric: tabular-nums; }
+        .leaderboard-item .l-title .risk-badge {
+            font-size: 10px;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            background: #333;
+        }
+
+        .leaderboard-item .l-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .leaderboard-item .l-bar-bg {
+            width: 100%;
+            height: 4px;
+            background: #222;
+            border-radius: 2px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        
+        .leaderboard-item .l-bar-fill {
+            height: 100%;
+            background: #ff6b35;
+            width: 0%;
+            transition: width 0.3s;
+        }
 
         /* Legend */
         #legend {
             top: 80px;
-            left: 20px;
+            left: 24px;
             background: rgba(20, 20, 30, 0.85);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 12px;
-            padding: 16px 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         #legend h3 {
-            font-size: 11px;
+            font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            color: #666;
-            margin-bottom: 12px;
+            color: #888;
+            margin-bottom: 16px;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 6px;
+            gap: 10px;
+            margin-bottom: 10px;
             font-size: 13px;
+            color: #ddd;
         }
 
         .legend-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 3px;
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.2);
         }
 
         /* Loading screen */
@@ -200,8 +237,8 @@
         #loading.hidden { opacity: 0; pointer-events: none; }
 
         .loader-ring {
-            width: 48px;
-            height: 48px;
+            width: 50px;
+            height: 50px;
             border: 3px solid rgba(255,107,53,0.2);
             border-top-color: #ff6b35;
             border-radius: 50%;
@@ -209,86 +246,54 @@
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        #loading p {
-            margin-top: 16px;
-            font-size: 13px;
-            color: #888;
-        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <div id="loading">
     <div class="loader-ring"></div>
-    <p>Running fire simulation...</p>
+    <p style="margin-top: 20px; color: #888; font-weight: 600; letter-spacing: 1px;">GENERATING BIODIVERSITY TERRAIN</p>
 </div>
 
 <div id="canvas-container">
-    <!-- Header -->
     <div id="header" class="overlay">
         <div>
-            <h1>BurnTrack</h1>
-            <div class="subtitle">Hexagonal Cellular Automata — Fire Spread Simulation</div>
+            <h1>BurnTrack AI</h1>
+            <div class="subtitle">Multi-Region Risk Forecasting & Biodiversity Spread</div>
         </div>
     </div>
 
     <!-- Legend -->
     <div id="legend" class="overlay">
-        <h3>Cell State</h3>
-        <div class="legend-item">
-            <div class="legend-dot" style="background: #2a6e3f;"></div>
-            <span>Unburned (S₀)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-dot" style="background: #ff4500;"></div>
-            <span>Burning (S₁)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-dot" style="background: #1a1a2e;"></div>
-            <span>Burned Out (S₂)</span>
-        </div>
+        <h3>Biodiversity & Fuels</h3>
+        <div class="legend-item"><div class="legend-dot" style="background: #1e4033;"></div><span>Aleppo Pine (Dense)</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background: #2d4a22;"></div><span>Cork Oak (Firebreak)</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background: #cca152;"></div><span>Dry Stipa (High Risk)</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background: #5c5c5c;"></div><span>Barren Rock (Safe)</span></div>
+        <div style="height:10px;"></div>
+        <div class="legend-item"><div class="legend-dot" style="background: #ff4500; box-shadow: 0 0 8px #ff4500;"></div><span>Active Fire Front</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background: #1a1a2e;"></div><span>Burned Area</span></div>
     </div>
 
-    <!-- Stats -->
+    <!-- Stats / Leaderboard -->
     <div id="stats" class="overlay">
-        <h3>Simulation Metrics</h3>
-        <div class="stat-row">
-            <span class="stat-label">Step</span>
-            <span class="stat-value" id="s-step">0</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-label">Burning</span>
-            <span class="stat-value" id="s-burning">0</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-label">Burned %</span>
-            <span class="stat-value" id="s-burned">0.0%</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-label">Wind</span>
-            <span class="stat-value" id="s-wind">—</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-label">Slope</span>
-            <span class="stat-value" id="s-slope">—</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-label">Fuel</span>
-            <span class="stat-value" id="s-fuel">—</span>
+        <h3 id="panel-title">Ignition Point Risk Analysis</h3>
+        <div id="leaderboard-container">
+            <!-- Populated via JS -->
         </div>
     </div>
 
     <!-- Controls -->
     <div id="controls" class="overlay">
+        <button id="btn-single">1-Point Burn</button>
+        <button id="btn-multi" class="special">⚡ 6-Point Risk Scan</button>
+        <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.1); margin: 0 8px;"></div>
         <button id="btn-play" class="active">▶ Play</button>
         <button id="btn-pause">⏸ Pause</button>
         <button id="btn-reset">↺ Reset</button>
-        <span id="step-display">Step 0 / 0</span>
-        <label style="font-size:12px;color:#888;">Speed</label>
-        <input type="range" id="speed-slider" min="1" max="20" value="5">
+        <span id="step-display">Step 0</span>
     </div>
 </div>
 
@@ -306,109 +311,152 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // ===== Configuration =====
-const HEX_SIZE = 0.45;
-const HEX_HEIGHT_UNBURNED = 0.3;
-const HEX_HEIGHT_BURNING = 1.2;
-const HEX_HEIGHT_BURNED = 0.05;
+const ROWS = 75;
+const COLS = 75;
+const HEX_SIZE = 0.35;
 
-const COLOR_UNBURNED = new THREE.Color(0x2a6e3f);
+// Biome Definitions (Biodiversity)
+const BIOMES = {
+    ROCK:  { id: 0, name: "Barren Rock", pVeg: -1.0, h: 0.1, color: 0x5c5c5c },
+    OAK:   { id: 1, name: "Cork Oak",    pVeg: 0.1,  h: 0.4, color: 0x2d4a22 },
+    PINE:  { id: 2, name: "Aleppo Pine", pVeg: 0.5,  h: 0.8, color: 0x1e4033 },
+    STIPA: { id: 3, name: "Dry Stipa",   pVeg: 0.95, h: 0.2, color: 0xcca152 }
+};
+
 const COLOR_BURNING = new THREE.Color(0xff4500);
 const COLOR_BURNED = new THREE.Color(0x1a1a2e);
 const COLOR_BURNING_EMISSIVE = new THREE.Color(0xff2200);
+
+// Ignition zones for 6-point scan
+const IGNITION_ZONES = [
+    { id: 1, name: "Zone 1 (NW)", r: Math.floor(ROWS*0.2), c: Math.floor(COLS*0.2), color: "#ff3366" },
+    { id: 2, name: "Zone 2 (NE)", r: Math.floor(ROWS*0.2), c: Math.floor(COLS*0.8), color: "#33ccff" },
+    { id: 3, name: "Zone 3 (W)",  r: Math.floor(ROWS*0.5), c: Math.floor(COLS*0.15), color: "#ffcc00" },
+    { id: 4, name: "Zone 4 (E)",  r: Math.floor(ROWS*0.5), c: Math.floor(COLS*0.85), color: "#cc33ff" },
+    { id: 5, name: "Zone 5 (SW)", r: Math.floor(ROWS*0.8), c: Math.floor(COLS*0.3), color: "#33ff66" },
+    { id: 6, name: "Zone 6 (SE)", r: Math.floor(ROWS*0.8), c: Math.floor(COLS*0.7), color: "#ff6600" }
+];
 
 // ===== State =====
 let simData = null;
 let currentFrame = 0;
 let playing = true;
-let speed = 5;
+let speed = 2; // Steps per render frame
 let hexMeshes = [];
+let biomeGrid = [];
+let activeMode = 'multi'; // 'single' or 'multi'
 
 // ===== Scene Setup =====
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0a0f);
 scene.fog = new THREE.FogExp2(0x0a0a0f, 0.015);
 
-const camera = new THREE.PerspectiveCamera(
-    50, window.innerWidth / window.innerHeight, 0.1, 200
-);
-camera.position.set(0, 30, 25);
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 500);
+camera.position.set(0, 45, 35);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.getElementById('canvas-container').appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-controls.target.set(0, 0, 0);
+controls.maxPolarAngle = Math.PI / 2.1;
 
 // Lights
-const ambient = new THREE.AmbientLight(0x404060, 0.5);
-scene.add(ambient);
-
+scene.add(new THREE.AmbientLight(0x404060, 0.6));
 const dirLight = new THREE.DirectionalLight(0xffeedd, 1.2);
-dirLight.position.set(20, 30, 10);
+dirLight.position.set(20, 40, 20);
 dirLight.castShadow = true;
-dirLight.shadow.mapSize.set(1024, 1024);
+dirLight.shadow.mapSize.set(2048, 2048);
 scene.add(dirLight);
 
-const pointLight = new THREE.PointLight(0xff6600, 0, 50);
-pointLight.position.set(0, 5, 0);
+const pointLight = new THREE.PointLight(0xff6600, 0, 80);
+pointLight.position.set(0, 10, 0);
 scene.add(pointLight);
 
-// Ground plane
-const groundGeo = new THREE.PlaneGeometry(80, 80);
-const groundMat = new THREE.MeshStandardMaterial({
-    color: 0x111118,
-    roughness: 0.9,
-});
-const ground = new THREE.Mesh(groundGeo, groundMat);
+// Ground
+const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(120, 120),
+    new THREE.MeshStandardMaterial({ color: 0x0a0a0f, roughness: 1.0 })
+);
 ground.rotation.x = -Math.PI / 2;
 ground.position.y = -0.1;
-ground.receiveShadow = true;
 scene.add(ground);
 
-// ===== Hex Grid Functions =====
-function hexToPixel(row, col, rows, cols) {
-    const offsetX = -(cols * HEX_SIZE * 1.75) / 2;
-    const offsetZ = -(rows * HEX_SIZE * 1.55) / 2;
-
+// ===== Hex Logic & Terrain Gen =====
+function hexToPixel(row, col) {
+    const offsetX = -(COLS * HEX_SIZE * 1.75) / 2;
+    const offsetZ = -(ROWS * HEX_SIZE * 1.55) / 2;
     let x = col * HEX_SIZE * 1.75;
     let z = row * HEX_SIZE * 1.55;
-
-    // Odd-r offset: shift odd rows
-    if (row % 2 === 1) {
-        x += HEX_SIZE * 0.875;
-    }
-
+    if (row % 2 === 1) x += HEX_SIZE * 0.875;
     return [x + offsetX, z + offsetZ];
 }
 
-function createHexGeometry(radius, height) {
-    return new THREE.CylinderGeometry(radius, radius, height, 6);
+// Pseudo-Perlin noise for biodiversity
+function generateTerrain() {
+    biomeGrid = Array.from({length: ROWS}, () => new Uint8Array(COLS));
+    
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            let nx = c / COLS * 5;
+            let ny = r / ROWS * 5;
+            
+            // Combination of sine waves to create organic patches
+            let e = Math.sin(nx) * Math.cos(ny) + 0.5 * Math.sin(nx*2.5 + ny*1.5);
+            
+            // Add a river/rocky valley through the middle
+            let distFromCenter = Math.abs((c - COLS/2) + Math.sin(r/5)*5);
+            
+            if (distFromCenter < 3) {
+                biomeGrid[r][c] = BIOMES.ROCK.id; // Firebreak
+            } else if (e > 0.6) {
+                biomeGrid[r][c] = BIOMES.ROCK.id;
+            } else if (e > 0.2) {
+                biomeGrid[r][c] = BIOMES.OAK.id;
+            } else if (e > -0.5) {
+                biomeGrid[r][c] = BIOMES.PINE.id;
+            } else {
+                biomeGrid[r][c] = BIOMES.STIPA.id;
+            }
+        }
+    }
 }
 
-function buildGrid(rows, cols) {
+function getBiomeDef(id) {
+    return Object.values(BIOMES).find(b => b.id === id);
+}
+
+function buildGrid() {
+    // Clear old
+    hexMeshes.forEach(row => row.forEach(m => scene.remove(m)));
     hexMeshes = [];
 
-    for (let r = 0; r < rows; r++) {
+    const geo = new THREE.CylinderGeometry(HEX_SIZE, HEX_SIZE, 1, 6);
+    // Push geometry up so origin is at bottom
+    geo.translate(0, 0.5, 0);
+
+    for (let r = 0; r < ROWS; r++) {
         hexMeshes[r] = [];
-        for (let c = 0; c < cols; c++) {
-            const geo = createHexGeometry(HEX_SIZE, HEX_HEIGHT_UNBURNED);
+        for (let c = 0; c < COLS; c++) {
+            const bDef = getBiomeDef(biomeGrid[r][c]);
             const mat = new THREE.MeshStandardMaterial({
-                color: COLOR_UNBURNED.clone(),
-                roughness: 0.7,
-                metalness: 0.1,
+                color: new THREE.Color(bDef.color),
+                roughness: 0.8,
             });
             const mesh = new THREE.Mesh(geo, mat);
 
-            const [x, z] = hexToPixel(r, c, rows, cols);
-            mesh.position.set(x, HEX_HEIGHT_UNBURNED / 2, z);
+            const [x, z] = hexToPixel(r, c);
+            mesh.position.set(x, 0, z);
+            mesh.scale.y = bDef.h;
             mesh.castShadow = true;
             mesh.receiveShadow = true;
+
+            // Store original data
+            mesh.userData = { origColor: mat.color.clone(), origHeight: bDef.h };
 
             scene.add(mesh);
             hexMeshes[r][c] = mesh;
@@ -416,132 +464,230 @@ function buildGrid(rows, cols) {
     }
 }
 
-function updateGrid(frameData, rows, cols) {
-    let burning = 0;
-    let burned = 0;
-    let total = rows * cols;
-
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            const state = frameData[r][c];
-            const mesh = hexMeshes[r][c];
-            const mat = mesh.material;
-
-            let targetHeight, targetColor;
-
-            if (state === 0) {
-                targetHeight = HEX_HEIGHT_UNBURNED;
-                targetColor = COLOR_UNBURNED;
-                mat.emissive = new THREE.Color(0x000000);
-                mat.emissiveIntensity = 0;
-            } else if (state === 1) {
-                targetHeight = HEX_HEIGHT_BURNING;
-                targetColor = COLOR_BURNING;
-                mat.emissive = COLOR_BURNING_EMISSIVE;
-                mat.emissiveIntensity = 0.8;
-                burning++;
-            } else {
-                targetHeight = HEX_HEIGHT_BURNED;
-                targetColor = COLOR_BURNED;
-                mat.emissive = new THREE.Color(0x000000);
-                mat.emissiveIntensity = 0;
-                burned++;
-            }
-
-            // Smooth transitions
-            mat.color.lerp(targetColor, 0.3);
-
-            const currentScale = mesh.scale.y;
-            const targetScale = targetHeight / HEX_HEIGHT_UNBURNED;
-            mesh.scale.y += (targetScale - currentScale) * 0.2;
-            mesh.position.y = (HEX_HEIGHT_UNBURNED * mesh.scale.y) / 2;
-        }
-    }
-
-    // Fire glow intensity
-    pointLight.intensity = burning * 0.3;
-
-    // Update stats
-    document.getElementById('s-step').textContent = currentFrame;
-    document.getElementById('s-burning').textContent = burning;
-    document.getElementById('s-burned').textContent =
-        ((burned + burning) / total * 100).toFixed(1) + '%';
-}
-
-// ===== Simulation Runner (in-browser) =====
-function generateSimulation(rows, cols, steps, windSpeed, slope) {
+// ===== CA Engine (JS Port) =====
+function runSimulation(ignitions, steps, windSpeed = 6.0, slope = 5.0) {
     const frames = [];
-    let grid = Array.from({length: rows}, () => new Int8Array(cols));
+    // State: 0=unburned, 1=burning, 2=burned
+    let stateGrid = Array.from({length: ROWS}, () => new Uint8Array(COLS));
+    // FireId: tracks which ignition point claimed the cell
+    let fireGrid = Array.from({length: ROWS}, () => new Uint8Array(COLS));
 
-    // Ignite center
-    grid[Math.floor(rows/2)][Math.floor(cols/2)] = 1;
-    frames.push(grid.map(r => [...r]));
+    // Ignite
+    ignitions.forEach(ig => {
+        stateGrid[ig.r][ig.c] = 1;
+        fireGrid[ig.r][ig.c] = ig.id;
+    });
+
+    frames.push({
+        state: stateGrid.map(r => new Uint8Array(r)),
+        fire: fireGrid.map(r => new Uint8Array(r))
+    });
 
     const evenNeighbors = [[-1,0],[-1,-1],[0,-1],[0,1],[1,0],[1,-1]];
     const oddNeighbors  = [[-1,1],[-1,0],[0,-1],[0,1],[1,1],[1,0]];
     const angles = [Math.PI/6, 5*Math.PI/6, Math.PI, 0, -Math.PI/6, -5*Math.PI/6];
-
+    
     const p0 = 0.58;
-    const pVeg = 0.85; // High flammability fuel
     const c1 = 0.045, c2 = 0.131, aSlope = 0.078;
 
     for (let step = 0; step < steps; step++) {
-        const newGrid = grid.map(r => Int8Array.from(r));
-        let hasBurning = false;
+        const newState = stateGrid.map(r => new Uint8Array(r));
+        const newFire = fireGrid.map(r => new Uint8Array(r));
+        let active = false;
 
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                if (grid[r][c] !== 1) continue;
-                newGrid[r][c] = 2;
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (stateGrid[r][c] !== 1) continue;
+                
+                newState[r][c] = 2; // Burn out
+                const currentFireId = fireGrid[r][c];
 
                 const nbrs = (r % 2 === 1) ? oddNeighbors : evenNeighbors;
                 for (let i = 0; i < 6; i++) {
                     const nr = r + nbrs[i][0];
                     const nc = c + nbrs[i][1];
-                    if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
-                    if (grid[nr][nc] !== 0) continue;
+                    
+                    if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
+                    if (stateGrid[nr][nc] !== 0) continue; // already burning or burned
+                    
+                    const bDef = getBiomeDef(biomeGrid[nr][nc]);
+                    if (bDef.pVeg < 0) continue; // Rock doesn't burn
 
                     const angle = angles[i];
                     const pw = Math.exp(windSpeed * (c1 + c2 * (Math.cos(angle) - 1)));
                     const ps = Math.exp(aSlope * Math.tan(slope * Math.PI/180) * Math.sin(angle));
-                    const pBurn = Math.min(p0 * (1 + pVeg) * pw * ps, 0.99);
+                    const pBurn = Math.min(p0 * (1 + bDef.pVeg) * pw * ps, 0.99);
 
+                    // Added a bit of stochasticity
                     if (Math.random() < pBurn) {
-                        newGrid[nr][nc] = 1;
-                        hasBurning = true;
+                        newState[nr][nc] = 1;
+                        newFire[nr][nc] = currentFireId;
+                        active = true;
                     }
                 }
             }
         }
 
-        grid = newGrid;
-        frames.push(grid.map(r => [...r]));
+        stateGrid = newState;
+        fireGrid = newFire;
+        frames.push({
+            state: stateGrid.map(r => new Uint8Array(r)),
+            fire: fireGrid.map(r => new Uint8Array(r))
+        });
 
-        if (!hasBurning && !grid.some(r => r.includes(1))) break;
+        if (!active) break; // Fire stopped
     }
 
-    return {
-        rows, cols, frames,
-        params: { wind_speed: windSpeed, slope, fuel: 'Stipa tenacissima', aridity: 'Dead' }
-    };
+    return frames;
 }
 
-// ===== Initialize =====
-async function init() {
-    // Generate simulation in-browser (no file dependency)
-    simData = generateSimulation(35, 35, 80, 7.0, 12.0);
+// ===== Rendering & UI =====
+function updateLeaderboard(frameData) {
+    if (activeMode !== 'multi') return;
 
-    buildGrid(simData.rows, simData.cols);
+    const counts = {};
+    IGNITION_ZONES.forEach(z => counts[z.id] = 0);
 
-    // Set params in UI
-    document.getElementById('s-wind').textContent = simData.params.wind_speed + ' m/s';
-    document.getElementById('s-slope').textContent = simData.params.slope + '°';
-    document.getElementById('s-fuel').textContent = simData.params.fuel;
+    // Count burned/burning cells per fire ID
+    for (let r=0; r<ROWS; r++) {
+        for (let c=0; c<COLS; c++) {
+            if (frameData.state[r][c] > 0) {
+                counts[frameData.fire[r][c]]++;
+            }
+        }
+    }
+
+    // Sort zones by damage
+    const sortedZones = IGNITION_ZONES.map(z => ({
+        ...z,
+        damage: counts[z.id] || 0
+    })).sort((a, b) => b.damage - a.damage);
+
+    const maxDamage = Math.max(1, sortedZones[0].damage);
+
+    let html = '';
+    sortedZones.forEach(z => {
+        const pct = (z.damage / maxDamage) * 100;
+        let riskColor = '#444';
+        let riskText = 'Low';
+        if (z.damage > 800) { riskColor = '#ff3333'; riskText = 'EXTREME'; }
+        else if (z.damage > 300) { riskColor = '#ff9900'; riskText = 'HIGH'; }
+        else if (z.damage > 50) { riskColor = '#f7c948'; riskText = 'MODERATE'; }
+
+        html += `
+            <div class="leaderboard-item" style="border-left-color: ${z.color}">
+                <div class="l-title">
+                    <span style="color: ${z.color}; font-weight: 600;">${z.name}</span>
+                    <span class="risk-badge" style="background: ${riskColor}33; color: ${riskColor}">${riskText}</span>
+                </div>
+                <div class="l-value">${z.damage} <span style="font-size: 10px; color: #888; font-weight: 400;">cells destroyed</span></div>
+                <div class="l-bar-bg">
+                    <div class="l-bar-fill" style="width: ${pct}%; background: ${z.color}"></div>
+                </div>
+            </div>
+        `;
+    });
+
+    document.getElementById('leaderboard-container').innerHTML = html;
+}
+
+function updateGrid(frameData) {
+    let burningCount = 0;
+
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            const state = frameData.state[r][c];
+            const fireId = frameData.fire[r][c];
+            const mesh = hexMeshes[r][c];
+            const mat = mesh.material;
+            const orig = mesh.userData;
+
+            let targetHeight = orig.origHeight;
+            let targetColor = orig.origColor;
+
+            if (state === 0) {
+                mat.emissiveIntensity = 0;
+            } else if (state === 1) {
+                targetHeight = orig.origHeight * 1.5;
+                
+                // If multi-mode, color the fire by its zone color to track it
+                if (activeMode === 'multi' && fireId > 0) {
+                    const zone = IGNITION_ZONES.find(z => z.id === fireId);
+                    if (zone) {
+                        targetColor = new THREE.Color(zone.color);
+                        mat.emissive = new THREE.Color(zone.color);
+                    }
+                } else {
+                    targetColor = COLOR_BURNING;
+                    mat.emissive = COLOR_BURNING_EMISSIVE;
+                }
+                mat.emissiveIntensity = 1.0;
+                burningCount++;
+            } else if (state === 2) {
+                targetHeight = 0.05; // burned down
+                targetColor = COLOR_BURNED;
+                mat.emissiveIntensity = 0;
+            }
+
+            mat.color.lerp(targetColor, 0.4);
+            mesh.scale.y += (targetHeight - mesh.scale.y) * 0.3;
+        }
+    }
+
+    pointLight.intensity = Math.min(burningCount * 0.5, 100);
+    document.getElementById('step-display').textContent = `Step ${currentFrame}`;
+    
+    if (activeMode === 'multi') {
+        updateLeaderboard(frameData);
+    }
+}
+
+// ===== Control Flow =====
+async function startScenario(mode) {
+    document.getElementById('loading').classList.remove('hidden');
+    
+    // Give UI time to paint loading screen
+    await new Promise(r => setTimeout(r, 100));
+
+    activeMode = mode;
+    generateTerrain();
+    buildGrid();
+
+    let ignitions = [];
+    if (mode === 'single') {
+        document.getElementById('panel-title').textContent = "Single Burn Stats";
+        document.getElementById('leaderboard-container').innerHTML = `
+            <div style="color: #aaa; font-size: 13px; margin-top: 20px;">
+                Observing physical spread across heterogeneous terrain. 
+                Switch to 6-Point Scan to evaluate regional risk profiles.
+            </div>
+        `;
+        // Ignite center
+        ignitions = [{ r: Math.floor(ROWS/2), c: Math.floor(COLS/2), id: 1 }];
+    } else {
+        document.getElementById('panel-title').textContent = "6-Zone Risk Analysis";
+        ignitions = IGNITION_ZONES;
+    }
+
+    simData = runSimulation(ignitions, 150, 8.0, 10.0);
+    currentFrame = 0;
+    playing = true;
+    
+    document.getElementById('btn-play').classList.add('active');
+    document.getElementById('btn-pause').classList.remove('active');
+    
+    if (mode === 'single') {
+        document.getElementById('btn-single').classList.add('special');
+        document.getElementById('btn-multi').classList.remove('special');
+    } else {
+        document.getElementById('btn-multi').classList.add('special');
+        document.getElementById('btn-single').classList.remove('special');
+    }
 
     document.getElementById('loading').classList.add('hidden');
 }
 
-// ===== Controls =====
+// ===== Events =====
 document.getElementById('btn-play').addEventListener('click', () => {
     playing = true;
     document.getElementById('btn-play').classList.add('active');
@@ -561,31 +707,28 @@ document.getElementById('btn-reset').addEventListener('click', () => {
     document.getElementById('btn-pause').classList.remove('active');
 });
 
-document.getElementById('speed-slider').addEventListener('input', (e) => {
-    speed = parseInt(e.target.value);
+document.getElementById('btn-single').addEventListener('click', () => startScenario('single'));
+document.getElementById('btn-multi').addEventListener('click', () => startScenario('multi'));
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
 // ===== Animation Loop =====
-let frameCounter = 0;
+let tickCounter = 0;
 
 function animate() {
     requestAnimationFrame(animate);
     controls.update();
 
     if (simData && playing) {
-        frameCounter++;
-        if (frameCounter >= (21 - speed)) {
-            frameCounter = 0;
-
-            if (currentFrame < simData.frames.length) {
-                updateGrid(
-                    simData.frames[currentFrame],
-                    simData.rows, simData.cols
-                );
-
-                document.getElementById('step-display').textContent =
-                    `Step ${currentFrame} / ${simData.frames.length - 1}`;
-
+        tickCounter++;
+        if (tickCounter >= speed) {
+            tickCounter = 0;
+            if (currentFrame < simData.length) {
+                updateGrid(simData[currentFrame]);
                 currentFrame++;
             }
         }
@@ -594,15 +737,8 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// ===== Resize =====
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-// ===== Start =====
-init().then(() => animate());
+// Start
+startScenario('multi').then(() => animate());
 </script>
 </body>
 </html>
