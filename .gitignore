@@ -1,0 +1,28 @@
+# Virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Large model files (regenerable via train_models.py)
+models/vision_baseline.keras
+models/vision_baseline.h5
+models/vision_quantized.tflite
+models/regional_risk.json
+
+# Keep the metrics explanation
+!models/metrics_explanation.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Gemini conversation log (165KB, not project code)
+conversation.md

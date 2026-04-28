@@ -1,0 +1,27 @@
+Model Evaluation Metrics Explanation
+======================================
+
+1. Accuracy:
+   - What it means: The percentage of total predictions that were correct.
+   - Use case: Best when classes are balanced (e.g., equal amounts of Aleppo Pine and Alfa Grass).
+
+2. Precision:
+   - What it means: Of all the times the model predicted a certain class (e.g., 'Extreme Risk'), how often was it actually correct?
+   - Use case: High precision means fewer "False Alarms".
+
+3. Recall (Sensitivity):
+   - What it means: Of all the real instances of a class (e.g., real 'Extreme Risk'), how many did the model successfully catch?
+   - Use case: In fire safety, Recall is CRITICAL. You don't want to miss a real fire risk.
+
+4. F1-Score:
+   - What it means: The harmonic mean of Precision and Recall.
+   - Use case: Provides a single balance between not having false alarms (Precision) and not missing real events (Recall).
+
+Note on North African Fuel Models:
+The vision model evaluates 13 classes covering North African fire-carrying biomass.
+The Risk model evaluates binary status: Moderate vs Extreme.
+
+Note on Synthetic Data:
+Current metrics are computed against synthetic (random) test data to validate the
+pipeline architecture. Metrics will become meaningful once field-collected imagery
+is used for training (Phase 2).

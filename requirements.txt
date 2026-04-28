@@ -1,0 +1,6 @@
+tensorflow-cpu>=2.14.0
+xgboost>=2.0.0
+scikit-learn
+duckdb>=0.9.0
+numpy>=1.24.0
+opencv-python-headless
