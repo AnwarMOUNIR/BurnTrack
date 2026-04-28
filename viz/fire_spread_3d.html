@@ -426,6 +426,69 @@ class RegionSim {
                 this.meshes[r][c] = mesh;
             }
         }
+        this.buildProbabilityLines();
+    }
+
+    buildProbabilityLines() {
+        const maxInstances = MAP_ROWS * MAP_COLS * 6;
+        const lineGeo = new THREE.PlaneGeometry(1, 1);
+        lineGeo.translate(0.5, 0, 0);
+        
+        const lineMat = new THREE.MeshBasicMaterial({ 
+            color: 0xffffff, transparent: true, opacity: 0.4, depthWrite: false 
+        });
+        
+        this.lineMesh = new THREE.InstancedMesh(lineGeo, lineMat, maxInstances);
+        let idx = 0;
+        
+        const dummy = new THREE.Object3D();
+        const evenNeighbors = [[-1,0],[-1,-1],[0,-1],[0,1],[1,0],[1,-1]];
+        const oddNeighbors  = [[-1,1],[-1,0],[0,-1],[0,1],[1,1],[1,0]];
+        const angles = [Math.PI/6, 5*Math.PI/6, Math.PI, 0, -Math.PI/6, -5*Math.PI/6];
+        const p0 = 0.58; const c1 = 0.045, c2 = 0.131;
+        
+        for (let r=0; r<MAP_ROWS; r++) {
+            for (let c=0; c<MAP_COLS; c++) {
+                const bDef = getBiomeDef(masterBiomeGrid[r][c]);
+                const mesh = this.meshes[r][c];
+                if (!mesh || bDef.pVeg < 0) continue;
+                
+                const nbrs = (r % 2 === 1) ? oddNeighbors : evenNeighbors;
+                for (let i=0; i<6; i++) {
+                    const nr = r + nbrs[i][0];
+                    const nc = c + nbrs[i][1];
+                    if (nr < 0 || nr >= MAP_ROWS || nc < 0 || nc >= MAP_COLS) continue;
+                    
+                    const tDef = getBiomeDef(masterBiomeGrid[nr][nc]);
+                    if (tDef.pVeg < 0) continue;
+                    
+                    const angle = angles[i];
+                    const pw = Math.exp(this.def ? this.def.wind : 6.0 * (c1 + c2 * (Math.cos(angle) - 1)));
+                    const pBurn = Math.min(p0 * (1 + tDef.pVeg) * pw, 0.99);
+                    
+                    const targetPos = this.meshes[nr][nc].position;
+                    dummy.position.copy(mesh.position);
+                    dummy.position.y = bDef.h + 0.02;
+                    
+                    dummy.rotation.set(-Math.PI/2, 0, Math.atan2(targetPos.z - mesh.position.z, targetPos.x - mesh.position.x));
+                    
+                    // Thicker lines for higher probability
+                    const thickness = 0.01 + (pBurn * 0.12);
+                    dummy.scale.set(HEX_SIZE * 0.8, thickness, 1);
+                    dummy.updateMatrix();
+                    this.lineMesh.setMatrixAt(idx, dummy.matrix);
+                    
+                    const color = new THREE.Color();
+                    if (pBurn > 0.6) color.setHex(0xff3333); // Red
+                    else if (pBurn > 0.3) color.setHex(0xffaa00); // Orange
+                    else color.setHex(0x5c5c5c); // Grey
+                    this.lineMesh.setColorAt(idx, color);
+                    idx++;
+                }
+            }
+        }
+        this.lineMesh.count = idx;
+        scene.add(this.lineMesh);
     }
 
     removeMeshes() {
@@ -436,6 +499,7 @@ class RegionSim {
                 }
             }
         }
+        if (this.lineMesh) scene.remove(this.lineMesh);
         this.meshes = [];
     }
 
