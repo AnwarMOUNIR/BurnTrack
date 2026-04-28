@@ -19,9 +19,9 @@ Model Evaluation Metrics Explanation
 
 Note on North African Fuel Models:
 The vision model evaluates 13 classes covering North African fire-carrying biomass.
-The Risk model evaluates binary status: Moderate vs Extreme.
+The Risk model evaluates 4-class severity: Low, Moderate, High, Extreme.
 
 Note on Synthetic Data:
-Current metrics are computed against synthetic (random) test data to validate the
-pipeline architecture. Metrics will become meaningful once field-collected imagery
+Current metrics are computed against synthetic (spectral/physics-based) test data to validate the
+pipeline architecture. Metrics will become fully representative once field-collected imagery
 is used for training (Phase 2).

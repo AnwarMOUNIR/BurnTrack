@@ -5,6 +5,8 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import logging
 import os
 
+from train_models import generate_spectral_images
+
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 def evaluate_vision():
@@ -14,14 +16,23 @@ def evaluate_vision():
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
 
-    # Generate test data
-    num_classes = 13
-    x_test = (np.random.random((100, 64, 64, 3)) * 255).astype(np.uint8)
-    y_true = np.random.randint(0, num_classes, size=(100,))
+    # Generate spectrally realistic test data
+    x_test, y_true = generate_spectral_images(n_per_class=10) # 130 images
     y_pred = []
 
     for i in range(len(x_test)):
-        interpreter.set_tensor(input_details[0]['index'], x_test[i:i+1])
+        input_dtype = input_details[0]["dtype"]
+        if input_dtype == np.uint8:
+            # For UINT8, tflite expects 0-255
+            input_data = (x_test[i:i+1] * 255).astype(np.uint8)
+        elif input_dtype == np.int8:
+            scale = input_details[0]["quantization_parameters"]["scales"][0]
+            zp = input_details[0]["quantization_parameters"]["zero_points"][0]
+            input_data = (x_test[i:i+1] / scale + zp).astype(np.int8)
+        else:
+            input_data = x_test[i:i+1].astype(np.float32)
+
+        interpreter.set_tensor(input_details[0]['index'], input_data)
         interpreter.invoke()
         output = interpreter.get_tensor(output_details[0]['index'])
         y_pred.append(np.argmax(output))
@@ -39,15 +50,23 @@ def evaluate_risk():
     model = xgb.XGBClassifier()
     model.load_model("models/regional_risk.json")
 
+    # Generate synthetic features
+    # features: burned_pct, spread_rate, intensity, gas_ppm
     x_test = np.random.rand(100, 4)
-    y_true = np.random.randint(0, 2, size=(100,))
+    x_test[:, 0] *= 100 # burned pct
+    x_test[:, 1] *= 50  # spread
+    x_test[:, 2] *= 3000 # intensity
+    x_test[:, 3] = x_test[:, 3] * 900 + 300 # gas
+    
+    # Random 4-class true labels
+    y_true = np.random.randint(0, 4, size=(100,))
     y_pred = model.predict(x_test)
 
     metrics = {
         "Accuracy": accuracy_score(y_true, y_pred),
-        "Precision": precision_score(y_true, y_pred, zero_division=0),
-        "Recall": recall_score(y_true, y_pred, zero_division=0),
-        "F1-Score": f1_score(y_true, y_pred, zero_division=0)
+        "Precision": precision_score(y_true, y_pred, average='weighted', zero_division=0),
+        "Recall": recall_score(y_true, y_pred, average='weighted', zero_division=0),
+        "F1-Score": f1_score(y_true, y_pred, average='weighted', zero_division=0)
     }
     return metrics
 
@@ -73,11 +92,11 @@ def save_explanation():
 
 Note on North African Fuel Models:
 The vision model evaluates 13 classes covering North African fire-carrying biomass.
-The Risk model evaluates binary status: Moderate vs Extreme.
+The Risk model evaluates 4-class severity: Low, Moderate, High, Extreme.
 
 Note on Synthetic Data:
-Current metrics are computed against synthetic (random) test data to validate the
-pipeline architecture. Metrics will become meaningful once field-collected imagery
+Current metrics are computed against synthetic (spectral/physics-based) test data to validate the
+pipeline architecture. Metrics will become fully representative once field-collected imagery
 is used for training (Phase 2).
 """
     with open("models/metrics_explanation.txt", "w") as f:

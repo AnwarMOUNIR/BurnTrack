@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BurnTrack — 3D Fire Spread Visualization</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0a0a0f;
+            color: #e0e0e0;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        canvas { display: block; }
+
+        /* Overlay UI */
+        .overlay {
+            position: absolute;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .overlay > * { pointer-events: auto; }
+
+        /* Top bar */
+        #header {
+            top: 0; left: 0; right: 0;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, rgba(10,10,15,0.9) 0%, transparent 100%);
+        }
+
+        #header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #ff6b35, #f7c948);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #header .subtitle {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        /* Controls panel */
+        #controls {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: rgba(20, 20, 30, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 12px 24px;
+        }
+
+        #controls button {
+            background: rgba(255,107,53,0.15);
+            border: 1px solid rgba(255,107,53,0.3);
+            color: #ff6b35;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
+
+        #controls button:hover {
+            background: rgba(255,107,53,0.3);
+            border-color: #ff6b35;
+        }
+
+        #controls button.active {
+            background: #ff6b35;
+            color: #0a0a0f;
+        }
+
+        #step-display {
+            font-size: 14px;
+            color: #aaa;
+            min-width: 100px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #speed-slider {
+            -webkit-appearance: none;
+            width: 100px;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        #speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #f7c948;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Stats panel */
+        #stats {
+            top: 80px;
+            right: 20px;
+            background: rgba(20, 20, 30, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 16px 20px;
+            min-width: 200px;
+        }
+
+        #stats h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .stat-label { color: #888; }
+        .stat-value { color: #f7c948; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+        /* Legend */
+        #legend {
+            top: 80px;
+            left: 20px;
+            background: rgba(20, 20, 30, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 16px 20px;
+        }
+
+        #legend h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        /* Loading screen */
+        #loading {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #0a0a0f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: opacity 0.5s;
+        }
+
+        #loading.hidden { opacity: 0; pointer-events: none; }
+
+        .loader-ring {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(255,107,53,0.2);
+            border-top-color: #ff6b35;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #loading p {
+            margin-top: 16px;
+            font-size: 13px;
+            color: #888;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="loading">
+    <div class="loader-ring"></div>
+    <p>Running fire simulation...</p>
+</div>
+
+<div id="canvas-container">
+    <!-- Header -->
+    <div id="header" class="overlay">
+        <div>
+            <h1>BurnTrack</h1>
+            <div class="subtitle">Hexagonal Cellular Automata — Fire Spread Simulation</div>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div id="legend" class="overlay">
+        <h3>Cell State</h3>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: #2a6e3f;"></div>
+            <span>Unburned (S₀)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: #ff4500;"></div>
+            <span>Burning (S₁)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: #1a1a2e;"></div>
+            <span>Burned Out (S₂)</span>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div id="stats" class="overlay">
+        <h3>Simulation Metrics</h3>
+        <div class="stat-row">
+            <span class="stat-label">Step</span>
+            <span class="stat-value" id="s-step">0</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Burning</span>
+            <span class="stat-value" id="s-burning">0</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Burned %</span>
+            <span class="stat-value" id="s-burned">0.0%</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Wind</span>
+            <span class="stat-value" id="s-wind">—</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Slope</span>
+            <span class="stat-value" id="s-slope">—</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Fuel</span>
+            <span class="stat-value" id="s-fuel">—</span>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div id="controls" class="overlay">
+        <button id="btn-play" class="active">▶ Play</button>
+        <button id="btn-pause">⏸ Pause</button>
+        <button id="btn-reset">↺ Reset</button>
+        <span id="step-display">Step 0 / 0</span>
+        <label style="font-size:12px;color:#888;">Speed</label>
+        <input type="range" id="speed-slider" min="1" max="20" value="5">
+    </div>
+</div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ===== Configuration =====
+const HEX_SIZE = 0.45;
+const HEX_HEIGHT_UNBURNED = 0.3;
+const HEX_HEIGHT_BURNING = 1.2;
+const HEX_HEIGHT_BURNED = 0.05;
+
+const COLOR_UNBURNED = new THREE.Color(0x2a6e3f);
+const COLOR_BURNING = new THREE.Color(0xff4500);
+const COLOR_BURNED = new THREE.Color(0x1a1a2e);
+const COLOR_BURNING_EMISSIVE = new THREE.Color(0xff2200);
+
+// ===== State =====
+let simData = null;
+let currentFrame = 0;
+let playing = true;
+let speed = 5;
+let hexMeshes = [];
+
+// ===== Scene Setup =====
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a0f);
+scene.fog = new THREE.FogExp2(0x0a0a0f, 0.015);
+
+const camera = new THREE.PerspectiveCamera(
+    50, window.innerWidth / window.innerHeight, 0.1, 200
+);
+camera.position.set(0, 30, 25);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.target.set(0, 0, 0);
+
+// Lights
+const ambient = new THREE.AmbientLight(0x404060, 0.5);
+scene.add(ambient);
+
+const dirLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+dirLight.position.set(20, 30, 10);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(1024, 1024);
+scene.add(dirLight);
+
+const pointLight = new THREE.PointLight(0xff6600, 0, 50);
+pointLight.position.set(0, 5, 0);
+scene.add(pointLight);
+
+// Ground plane
+const groundGeo = new THREE.PlaneGeometry(80, 80);
+const groundMat = new THREE.MeshStandardMaterial({
+    color: 0x111118,
+    roughness: 0.9,
+});
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -0.1;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ===== Hex Grid Functions =====
+function hexToPixel(row, col, rows, cols) {
+    const offsetX = -(cols * HEX_SIZE * 1.75) / 2;
+    const offsetZ = -(rows * HEX_SIZE * 1.55) / 2;
+
+    let x = col * HEX_SIZE * 1.75;
+    let z = row * HEX_SIZE * 1.55;
+
+    // Odd-r offset: shift odd rows
+    if (row % 2 === 1) {
+        x += HEX_SIZE * 0.875;
+    }
+
+    return [x + offsetX, z + offsetZ];
+}
+
+function createHexGeometry(radius, height) {
+    return new THREE.CylinderGeometry(radius, radius, height, 6);
+}
+
+function buildGrid(rows, cols) {
+    hexMeshes = [];
+
+    for (let r = 0; r < rows; r++) {
+        hexMeshes[r] = [];
+        for (let c = 0; c < cols; c++) {
+            const geo = createHexGeometry(HEX_SIZE, HEX_HEIGHT_UNBURNED);
+            const mat = new THREE.MeshStandardMaterial({
+                color: COLOR_UNBURNED.clone(),
+                roughness: 0.7,
+                metalness: 0.1,
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+
+            const [x, z] = hexToPixel(r, c, rows, cols);
+            mesh.position.set(x, HEX_HEIGHT_UNBURNED / 2, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+
+            scene.add(mesh);
+            hexMeshes[r][c] = mesh;
+        }
+    }
+}
+
+function updateGrid(frameData, rows, cols) {
+    let burning = 0;
+    let burned = 0;
+    let total = rows * cols;
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const state = frameData[r][c];
+            const mesh = hexMeshes[r][c];
+            const mat = mesh.material;
+
+            let targetHeight, targetColor;
+
+            if (state === 0) {
+                targetHeight = HEX_HEIGHT_UNBURNED;
+                targetColor = COLOR_UNBURNED;
+                mat.emissive = new THREE.Color(0x000000);
+                mat.emissiveIntensity = 0;
+            } else if (state === 1) {
+                targetHeight = HEX_HEIGHT_BURNING;
+                targetColor = COLOR_BURNING;
+                mat.emissive = COLOR_BURNING_EMISSIVE;
+                mat.emissiveIntensity = 0.8;
+                burning++;
+            } else {
+                targetHeight = HEX_HEIGHT_BURNED;
+                targetColor = COLOR_BURNED;
+                mat.emissive = new THREE.Color(0x000000);
+                mat.emissiveIntensity = 0;
+                burned++;
+            }
+
+            // Smooth transitions
+            mat.color.lerp(targetColor, 0.3);
+
+            const currentScale = mesh.scale.y;
+            const targetScale = targetHeight / HEX_HEIGHT_UNBURNED;
+            mesh.scale.y += (targetScale - currentScale) * 0.2;
+            mesh.position.y = (HEX_HEIGHT_UNBURNED * mesh.scale.y) / 2;
+        }
+    }
+
+    // Fire glow intensity
+    pointLight.intensity = burning * 0.3;
+
+    // Update stats
+    document.getElementById('s-step').textContent = currentFrame;
+    document.getElementById('s-burning').textContent = burning;
+    document.getElementById('s-burned').textContent =
+        ((burned + burning) / total * 100).toFixed(1) + '%';
+}
+
+// ===== Simulation Runner (in-browser) =====
+function generateSimulation(rows, cols, steps, windSpeed, slope) {
+    const frames = [];
+    let grid = Array.from({length: rows}, () => new Int8Array(cols));
+
+    // Ignite center
+    grid[Math.floor(rows/2)][Math.floor(cols/2)] = 1;
+    frames.push(grid.map(r => [...r]));
+
+    const evenNeighbors = [[-1,0],[-1,-1],[0,-1],[0,1],[1,0],[1,-1]];
+    const oddNeighbors  = [[-1,1],[-1,0],[0,-1],[0,1],[1,1],[1,0]];
+    const angles = [Math.PI/6, 5*Math.PI/6, Math.PI, 0, -Math.PI/6, -5*Math.PI/6];
+
+    const p0 = 0.58;
+    const pVeg = 0.85; // High flammability fuel
+    const c1 = 0.045, c2 = 0.131, aSlope = 0.078;
+
+    for (let step = 0; step < steps; step++) {
+        const newGrid = grid.map(r => Int8Array.from(r));
+        let hasBurning = false;
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                if (grid[r][c] !== 1) continue;
+                newGrid[r][c] = 2;
+
+                const nbrs = (r % 2 === 1) ? oddNeighbors : evenNeighbors;
+                for (let i = 0; i < 6; i++) {
+                    const nr = r + nbrs[i][0];
+                    const nc = c + nbrs[i][1];
+                    if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+                    if (grid[nr][nc] !== 0) continue;
+
+                    const angle = angles[i];
+                    const pw = Math.exp(windSpeed * (c1 + c2 * (Math.cos(angle) - 1)));
+                    const ps = Math.exp(aSlope * Math.tan(slope * Math.PI/180) * Math.sin(angle));
+                    const pBurn = Math.min(p0 * (1 + pVeg) * pw * ps, 0.99);
+
+                    if (Math.random() < pBurn) {
+                        newGrid[nr][nc] = 1;
+                        hasBurning = true;
+                    }
+                }
+            }
+        }
+
+        grid = newGrid;
+        frames.push(grid.map(r => [...r]));
+
+        if (!hasBurning && !grid.some(r => r.includes(1))) break;
+    }
+
+    return {
+        rows, cols, frames,
+        params: { wind_speed: windSpeed, slope, fuel: 'Stipa tenacissima', aridity: 'Dead' }
+    };
+}
+
+// ===== Initialize =====
+async function init() {
+    // Generate simulation in-browser (no file dependency)
+    simData = generateSimulation(35, 35, 80, 7.0, 12.0);
+
+    buildGrid(simData.rows, simData.cols);
+
+    // Set params in UI
+    document.getElementById('s-wind').textContent = simData.params.wind_speed + ' m/s';
+    document.getElementById('s-slope').textContent = simData.params.slope + '°';
+    document.getElementById('s-fuel').textContent = simData.params.fuel;
+
+    document.getElementById('loading').classList.add('hidden');
+}
+
+// ===== Controls =====
+document.getElementById('btn-play').addEventListener('click', () => {
+    playing = true;
+    document.getElementById('btn-play').classList.add('active');
+    document.getElementById('btn-pause').classList.remove('active');
+});
+
+document.getElementById('btn-pause').addEventListener('click', () => {
+    playing = false;
+    document.getElementById('btn-pause').classList.add('active');
+    document.getElementById('btn-play').classList.remove('active');
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+    currentFrame = 0;
+    playing = true;
+    document.getElementById('btn-play').classList.add('active');
+    document.getElementById('btn-pause').classList.remove('active');
+});
+
+document.getElementById('speed-slider').addEventListener('input', (e) => {
+    speed = parseInt(e.target.value);
+});
+
+// ===== Animation Loop =====
+let frameCounter = 0;
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+
+    if (simData && playing) {
+        frameCounter++;
+        if (frameCounter >= (21 - speed)) {
+            frameCounter = 0;
+
+            if (currentFrame < simData.frames.length) {
+                updateGrid(
+                    simData.frames[currentFrame],
+                    simData.rows, simData.cols
+                );
+
+                document.getElementById('step-display').textContent =
+                    `Step ${currentFrame} / ${simData.frames.length - 1}`;
+
+                currentFrame++;
+            }
+        }
+    }
+
+    renderer.render(scene, camera);
+}
+
+// ===== Resize =====
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ===== Start =====
+init().then(() => animate());
+</script>
+</body>
+</html>
