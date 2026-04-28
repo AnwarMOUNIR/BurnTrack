@@ -231,8 +231,8 @@ function generateProceduralFallback() {
 // Attempt to load a real satellite forest image
 const img = new Image();
 img.crossOrigin = "Anonymous";
-// Confirmed top-down aerial view of a dense forest
-img.src = "https://images.unsplash.com/photo-1511497584788-876760111969?q=80&w=1200&auto=format&fit=crop";
+// Pure Top-Down/Nadir Landsat Satellite Image of the Amazon
+img.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Amazon_rainforest_satellite_image.jpg/1024px-Amazon_rainforest_satellite_image.jpg";
 
 img.onload = () => {
     // Fill canvas
