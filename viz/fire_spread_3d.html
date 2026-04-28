@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BurnTrack — 3D Fire Spread Visualization</title>
+    <title>BurnTrack — 6-Zone Risk Forecasting</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -20,31 +20,24 @@
             position: relative;
         }
 
-        canvas { display: block; }
-
         /* Overlay UI */
-        .overlay {
-            position: absolute;
-            z-index: 10;
-            pointer-events: none;
-        }
-
+        .overlay { position: absolute; z-index: 10; pointer-events: none; }
         .overlay > * { pointer-events: auto; }
 
         /* Top bar */
         #header {
             top: 0; left: 0; right: 0;
-            padding: 16px 24px;
+            padding: 20px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: linear-gradient(180deg, rgba(10,10,15,0.9) 0%, transparent 100%);
+            background: linear-gradient(180deg, rgba(10,10,15,0.95) 0%, transparent 100%);
         }
 
         #header h1 {
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 800;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
             text-transform: uppercase;
             background: linear-gradient(135deg, #ff6b35, #f7c948);
             -webkit-background-clip: text;
@@ -52,14 +45,15 @@
         }
 
         #header .subtitle {
-            font-size: 13px;
+            font-size: 14px;
             color: #aaa;
             margin-top: 4px;
+            letter-spacing: 1px;
         }
 
         /* Controls panel */
         #controls {
-            bottom: 24px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -70,230 +64,192 @@
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 16px;
             padding: 16px 32px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
         }
 
         #controls button {
-            background: rgba(255,107,53,0.15);
-            border: 1px solid rgba(255,107,53,0.3);
-            color: #ff6b35;
-            padding: 10px 24px;
+            background: linear-gradient(135deg, #ff6b35, #f7c948);
+            color: #0a0a0f;
+            border: none;
+            padding: 12px 28px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(255,107,53,0.3);
             transition: all 0.2s;
         }
 
         #controls button:hover {
-            background: rgba(255,107,53,0.3);
-            border-color: #ff6b35;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 25px rgba(255,107,53,0.5);
         }
 
-        #controls button.active {
-            background: #ff6b35;
-            color: #0a0a0f;
-        }
-
-        #controls button.special {
-            background: linear-gradient(135deg, #ff6b35, #f7c948);
-            color: #0a0a0f;
-            border: none;
-            box-shadow: 0 0 15px rgba(255,107,53,0.4);
-        }
-
-        #step-display {
-            font-size: 15px;
-            color: #ccc;
-            min-width: 110px;
-            text-align: center;
-            font-variant-numeric: tabular-nums;
-            font-weight: 600;
-        }
-
-        /* Stats panel */
-        #stats {
-            top: 80px;
-            right: 24px;
-            background: rgba(20, 20, 30, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 12px;
-            padding: 20px;
-            min-width: 280px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        #stats h3 {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: #888;
-            margin-bottom: 16px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 8px;
-        }
-
-        /* Leaderboard for multi-risk */
-        .leaderboard-item {
-            margin-bottom: 12px;
-            padding: 10px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 8px;
-            border-left: 4px solid #444;
-            transition: all 0.3s;
-        }
-
-        .leaderboard-item .l-title {
-            font-size: 12px;
-            color: #aaa;
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 4px;
-        }
-
-        .leaderboard-item .l-title .risk-badge {
-            font-size: 10px;
-            text-transform: uppercase;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 700;
-            background: #333;
-        }
-
-        .leaderboard-item .l-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: #fff;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .leaderboard-item .l-bar-bg {
-            width: 100%;
-            height: 4px;
-            background: #222;
-            border-radius: 2px;
-            margin-top: 6px;
-            overflow: hidden;
-        }
-        
-        .leaderboard-item .l-bar-fill {
-            height: 100%;
-            background: #ff6b35;
-            width: 0%;
-            transition: width 0.3s;
-        }
-
-        /* Legend */
-        #legend {
-            top: 80px;
-            left: 24px;
-            background: rgba(20, 20, 30, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        #legend h3 {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: #888;
-            margin-bottom: 16px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            font-size: 13px;
-            color: #ddd;
-        }
-
-        .legend-dot {
-            width: 14px;
-            height: 14px;
-            border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        /* Loading screen */
-        #loading {
+        /* Popup Modal (3-Color Map) */
+        #result-modal {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: #0a0a0f;
+            background: rgba(5, 5, 10, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        #result-modal.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: #121218;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 900px;
+            width: 90%;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            transform: translateY(20px);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #result-modal.visible .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-header h2 {
+            font-size: 28px;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+
+        .modal-header p {
+            color: #888;
+            margin-top: 8px;
+            font-size: 15px;
+        }
+
+        /* 3-Color Map Grid */
+        .risk-map-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .zone-card {
+            background: #1e1e24;
+            border-radius: 16px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            z-index: 100;
-            transition: opacity 0.5s;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s;
         }
 
-        #loading.hidden { opacity: 0; pointer-events: none; }
-
-        .loader-ring {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(255,107,53,0.2);
-            border-top-color: #ff6b35;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+        .zone-card h3 {
+            font-size: 16px;
+            color: #fff;
+            margin-bottom: 12px;
         }
 
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .zone-card .burn-stat {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .zone-card .risk-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+
+        /* The 3 Colors */
+        .risk-low {
+            border-color: #3b82f6; /* BLUE */
+            background: rgba(59, 130, 246, 0.1);
+        }
+        .risk-low .burn-stat { color: #3b82f6; }
+        .risk-low .risk-label { background: #3b82f6; color: #fff; }
+
+        .risk-mod {
+            border-color: #f59e0b; /* ORANGE */
+            background: rgba(245, 158, 11, 0.1);
+        }
+        .risk-mod .burn-stat { color: #f59e0b; }
+        .risk-mod .risk-label { background: #f59e0b; color: #fff; }
+
+        .risk-ext {
+            border-color: #ef4444; /* RED */
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .risk-ext .burn-stat { color: #ef4444; }
+        .risk-ext .risk-label { background: #ef4444; color: #fff; }
+
+        .btn-close {
+            display: block;
+            margin: 0 auto;
+            background: #2a2a35;
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-close:hover { background: #3a3a45; }
+
     </style>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-
-<div id="loading">
-    <div class="loader-ring"></div>
-    <p style="margin-top: 20px; color: #888; font-weight: 600; letter-spacing: 1px;">GENERATING BIODIVERSITY TERRAIN</p>
-</div>
 
 <div id="canvas-container">
     <div id="header" class="overlay">
         <div>
             <h1>BurnTrack AI</h1>
-            <div class="subtitle">Multi-Region Risk Forecasting & Biodiversity Spread</div>
-        </div>
-    </div>
-
-    <!-- Legend -->
-    <div id="legend" class="overlay">
-        <h3>Biodiversity & Fuels</h3>
-        <div class="legend-item"><div class="legend-dot" style="background: #1e4033;"></div><span>Aleppo Pine (Dense)</span></div>
-        <div class="legend-item"><div class="legend-dot" style="background: #2d4a22;"></div><span>Cork Oak (Firebreak)</span></div>
-        <div class="legend-item"><div class="legend-dot" style="background: #cca152;"></div><span>Dry Stipa (High Risk)</span></div>
-        <div class="legend-item"><div class="legend-dot" style="background: #5c5c5c;"></div><span>Barren Rock (Safe)</span></div>
-        <div style="height:10px;"></div>
-        <div class="legend-item"><div class="legend-dot" style="background: #ff4500; box-shadow: 0 0 8px #ff4500;"></div><span>Active Fire Front</span></div>
-        <div class="legend-item"><div class="legend-dot" style="background: #1a1a2e;"></div><span>Burned Area</span></div>
-    </div>
-
-    <!-- Stats / Leaderboard -->
-    <div id="stats" class="overlay">
-        <h3 id="panel-title">Ignition Point Risk Analysis</h3>
-        <div id="leaderboard-container">
-            <!-- Populated via JS -->
+            <div class="subtitle">Concurrent Regional Risk Simulation</div>
         </div>
     </div>
 
     <!-- Controls -->
     <div id="controls" class="overlay">
-        <button id="btn-single">1-Point Burn</button>
-        <button id="btn-multi" class="special">⚡ 6-Point Risk Scan</button>
-        <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.1); margin: 0 8px;"></div>
-        <button id="btn-play" class="active">▶ Play</button>
-        <button id="btn-pause">⏸ Pause</button>
-        <button id="btn-reset">↺ Reset</button>
-        <span id="step-display">Step 0</span>
+        <button id="btn-run">Start 6-Zone Simulation</button>
+    </div>
+</div>
+
+<!-- Risk Analysis Popup -->
+<div id="result-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Regional Risk Heatmap</h2>
+            <p>Post-simulation analysis of the 6 forecasting zones.</p>
+        </div>
+
+        <div class="risk-map-grid" id="risk-grid">
+            <!-- Cards injected via JS -->
+        </div>
+
+        <button class="btn-close" id="btn-close-modal">Close Analysis</button>
     </div>
 </div>
 
@@ -311,404 +267,275 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // ===== Configuration =====
-const ROWS = 75;
-const COLS = 75;
-const HEX_SIZE = 0.35;
+const HEX_SIZE = 0.5;
+const MAP_ROWS = 31;
+const MAP_COLS = 31;
+const TOTAL_STEPS = 120;
 
-// Biome Definitions (Biodiversity)
+// Biomes
 const BIOMES = {
-    ROCK:  { id: 0, name: "Barren Rock", pVeg: -1.0, h: 0.1, color: 0x5c5c5c },
-    OAK:   { id: 1, name: "Cork Oak",    pVeg: 0.1,  h: 0.4, color: 0x2d4a22 },
-    PINE:  { id: 2, name: "Aleppo Pine", pVeg: 0.5,  h: 0.8, color: 0x1e4033 },
-    STIPA: { id: 3, name: "Dry Stipa",   pVeg: 0.95, h: 0.2, color: 0xcca152 }
+    ROCK:  { id: 0, pVeg: -1.0, h: 0.1, color: 0x5c5c5c },
+    OAK:   { id: 1, pVeg: 0.05, h: 0.4, color: 0x2d4a22 }, // Firebreak
+    PINE:  { id: 2, pVeg: 0.6,  h: 0.8, color: 0x1e4033 }, // Moderate
+    STIPA: { id: 3, pVeg: 0.95, h: 0.2, color: 0xcca152 }  // High danger
 };
 
 const COLOR_BURNING = new THREE.Color(0xff4500);
 const COLOR_BURNED = new THREE.Color(0x1a1a2e);
 const COLOR_BURNING_EMISSIVE = new THREE.Color(0xff2200);
 
-// Ignition zones for 6-point scan
-const IGNITION_ZONES = [
-    { id: 1, name: "Zone 1 (NW)", r: Math.floor(ROWS*0.2), c: Math.floor(COLS*0.2), color: "#ff3366" },
-    { id: 2, name: "Zone 2 (NE)", r: Math.floor(ROWS*0.2), c: Math.floor(COLS*0.8), color: "#33ccff" },
-    { id: 3, name: "Zone 3 (W)",  r: Math.floor(ROWS*0.5), c: Math.floor(COLS*0.15), color: "#ffcc00" },
-    { id: 4, name: "Zone 4 (E)",  r: Math.floor(ROWS*0.5), c: Math.floor(COLS*0.85), color: "#cc33ff" },
-    { id: 5, name: "Zone 5 (SW)", r: Math.floor(ROWS*0.8), c: Math.floor(COLS*0.3), color: "#33ff66" },
-    { id: 6, name: "Zone 6 (SE)", r: Math.floor(ROWS*0.8), c: Math.floor(COLS*0.7), color: "#ff6600" }
+// The 6 Regions in a 3x2 Layout
+const REGIONS = [
+    { id: 0, name: "NW: Dry Plains",  x: -35, z: -20, wind: 5.0, gen: () => BIOMES.STIPA.id },
+    { id: 1, name: "N: Oak Valley",   x: 0,   z: -20, wind: 4.0, gen: () => Math.random() > 0.1 ? BIOMES.OAK.id : BIOMES.ROCK.id },
+    { id: 2, name: "NE: Mixed Woods", x: 35,  z: -20, wind: 6.0, gen: () => Math.random() > 0.5 ? BIOMES.PINE.id : BIOMES.OAK.id },
+    { id: 3, name: "SW: Pine Ridge",  x: -35, z: 20,  wind: 7.0, gen: () => BIOMES.PINE.id },
+    { id: 4, name: "S: Rocky Scrub",  x: 0,   z: 20,  wind: 4.0, gen: () => Math.random() > 0.4 ? BIOMES.ROCK.id : BIOMES.STIPA.id },
+    { id: 5, name: "SE: High Wind",   x: 35,  z: 20,  wind: 15.0, gen: () => BIOMES.STIPA.id } // Extreme danger
 ];
-
-// ===== State =====
-let simData = null;
-let currentFrame = 0;
-let playing = true;
-let speed = 2; // Steps per render frame
-let hexMeshes = [];
-let biomeGrid = [];
-let activeMode = 'multi'; // 'single' or 'multi'
 
 // ===== Scene Setup =====
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0a0f);
-scene.fog = new THREE.FogExp2(0x0a0a0f, 0.015);
+scene.fog = new THREE.FogExp2(0x0a0a0f, 0.008);
 
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 500);
-camera.position.set(0, 45, 35);
+const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 80, 80); // High angle to see all 6 maps
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
 document.getElementById('canvas-container').appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-controls.maxPolarAngle = Math.PI / 2.1;
+controls.maxPolarAngle = Math.PI / 2.2;
+controls.target.set(0, 0, 0);
 
 // Lights
 scene.add(new THREE.AmbientLight(0x404060, 0.6));
 const dirLight = new THREE.DirectionalLight(0xffeedd, 1.2);
-dirLight.position.set(20, 40, 20);
-dirLight.castShadow = true;
-dirLight.shadow.mapSize.set(2048, 2048);
+dirLight.position.set(20, 50, 20);
 scene.add(dirLight);
 
-const pointLight = new THREE.PointLight(0xff6600, 0, 80);
-pointLight.position.set(0, 10, 0);
+const pointLight = new THREE.PointLight(0xff4500, 0, 200);
+pointLight.position.set(0, 20, 0);
 scene.add(pointLight);
 
-// Ground
-const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(120, 120),
-    new THREE.MeshStandardMaterial({ color: 0x0a0a0f, roughness: 1.0 })
-);
-ground.rotation.x = -Math.PI / 2;
-ground.position.y = -0.1;
-scene.add(ground);
+// ===== Simulation Class =====
+class RegionSim {
+    constructor(regionDef) {
+        this.def = regionDef;
+        this.biomeGrid = Array.from({length: MAP_ROWS}, () => new Uint8Array(MAP_COLS));
+        this.stateGrid = Array.from({length: MAP_ROWS}, () => new Uint8Array(MAP_COLS));
+        this.meshes = [];
+        this.active = false;
+        this.burnedCount = 0;
+        
+        this.initTerrain();
+        this.buildMeshes();
+    }
 
-// ===== Hex Logic & Terrain Gen =====
-function hexToPixel(row, col) {
-    const offsetX = -(COLS * HEX_SIZE * 1.75) / 2;
-    const offsetZ = -(ROWS * HEX_SIZE * 1.55) / 2;
-    let x = col * HEX_SIZE * 1.75;
-    let z = row * HEX_SIZE * 1.55;
-    if (row % 2 === 1) x += HEX_SIZE * 0.875;
-    return [x + offsetX, z + offsetZ];
-}
-
-// Pseudo-Perlin noise for biodiversity
-function generateTerrain() {
-    biomeGrid = Array.from({length: ROWS}, () => new Uint8Array(COLS));
-    
-    for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-            let nx = c / COLS * 5;
-            let ny = r / ROWS * 5;
-            
-            // Combination of sine waves to create organic patches
-            let e = Math.sin(nx) * Math.cos(ny) + 0.5 * Math.sin(nx*2.5 + ny*1.5);
-            
-            // Add a river/rocky valley through the middle
-            let distFromCenter = Math.abs((c - COLS/2) + Math.sin(r/5)*5);
-            
-            if (distFromCenter < 3) {
-                biomeGrid[r][c] = BIOMES.ROCK.id; // Firebreak
-            } else if (e > 0.6) {
-                biomeGrid[r][c] = BIOMES.ROCK.id;
-            } else if (e > 0.2) {
-                biomeGrid[r][c] = BIOMES.OAK.id;
-            } else if (e > -0.5) {
-                biomeGrid[r][c] = BIOMES.PINE.id;
-            } else {
-                biomeGrid[r][c] = BIOMES.STIPA.id;
+    initTerrain() {
+        for (let r=0; r<MAP_ROWS; r++) {
+            for (let c=0; c<MAP_COLS; c++) {
+                this.biomeGrid[r][c] = this.def.gen();
             }
         }
     }
-}
 
-function getBiomeDef(id) {
-    return Object.values(BIOMES).find(b => b.id === id);
-}
+    getBiomeDef(id) {
+        return Object.values(BIOMES).find(b => b.id === id);
+    }
 
-function buildGrid() {
-    // Clear old
-    hexMeshes.forEach(row => row.forEach(m => scene.remove(m)));
-    hexMeshes = [];
+    buildMeshes() {
+        const geo = new THREE.CylinderGeometry(HEX_SIZE, HEX_SIZE, 1, 6);
+        geo.translate(0, 0.5, 0);
 
-    const geo = new THREE.CylinderGeometry(HEX_SIZE, HEX_SIZE, 1, 6);
-    // Push geometry up so origin is at bottom
-    geo.translate(0, 0.5, 0);
+        for (let r=0; r<MAP_ROWS; r++) {
+            this.meshes[r] = [];
+            for (let c=0; c<MAP_COLS; c++) {
+                const bDef = this.getBiomeDef(this.biomeGrid[r][c]);
+                const mat = new THREE.MeshStandardMaterial({
+                    color: new THREE.Color(bDef.color),
+                    roughness: 0.8,
+                });
+                const mesh = new THREE.Mesh(geo, mat);
 
-    for (let r = 0; r < ROWS; r++) {
-        hexMeshes[r] = [];
-        for (let c = 0; c < COLS; c++) {
-            const bDef = getBiomeDef(biomeGrid[r][c]);
-            const mat = new THREE.MeshStandardMaterial({
-                color: new THREE.Color(bDef.color),
-                roughness: 0.8,
-            });
-            const mesh = new THREE.Mesh(geo, mat);
+                // Calculate hex offset
+                const offsetX = -(MAP_COLS * HEX_SIZE * 1.75) / 2;
+                const offsetZ = -(MAP_ROWS * HEX_SIZE * 1.55) / 2;
+                let lx = c * HEX_SIZE * 1.75;
+                let lz = r * HEX_SIZE * 1.55;
+                if (r % 2 === 1) lx += HEX_SIZE * 0.875;
 
-            const [x, z] = hexToPixel(r, c);
-            mesh.position.set(x, 0, z);
-            mesh.scale.y = bDef.h;
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-
-            // Store original data
-            mesh.userData = { origColor: mat.color.clone(), origHeight: bDef.h };
-
-            scene.add(mesh);
-            hexMeshes[r][c] = mesh;
+                mesh.position.set(this.def.x + lx + offsetX, 0, this.def.z + lz + offsetZ);
+                mesh.scale.y = bDef.h;
+                
+                mesh.userData = { origColor: mat.color.clone(), origHeight: bDef.h };
+                scene.add(mesh);
+                this.meshes[r][c] = mesh;
+            }
         }
     }
-}
 
-// ===== CA Engine (JS Port) =====
-function runSimulation(ignitions, steps, windSpeed = 6.0, slope = 5.0) {
-    const frames = [];
-    // State: 0=unburned, 1=burning, 2=burned
-    let stateGrid = Array.from({length: ROWS}, () => new Uint8Array(COLS));
-    // FireId: tracks which ignition point claimed the cell
-    let fireGrid = Array.from({length: ROWS}, () => new Uint8Array(COLS));
+    ignite() {
+        // Ignite center
+        const cr = Math.floor(MAP_ROWS/2);
+        const cc = Math.floor(MAP_COLS/2);
+        this.stateGrid[cr][cc] = 1;
+        this.active = true;
+        this.burnedCount = 0;
+    }
 
-    // Ignite
-    ignitions.forEach(ig => {
-        stateGrid[ig.r][ig.c] = 1;
-        fireGrid[ig.r][ig.c] = ig.id;
-    });
+    reset() {
+        this.active = false;
+        this.burnedCount = 0;
+        for (let r=0; r<MAP_ROWS; r++) {
+            for (let c=0; c<MAP_COLS; c++) {
+                this.stateGrid[r][c] = 0;
+                
+                const mesh = this.meshes[r][c];
+                const mat = mesh.material;
+                mat.color.copy(mesh.userData.origColor);
+                mat.emissiveIntensity = 0;
+                mesh.scale.y = mesh.userData.origHeight;
+            }
+        }
+    }
 
-    frames.push({
-        state: stateGrid.map(r => new Uint8Array(r)),
-        fire: fireGrid.map(r => new Uint8Array(r))
-    });
+    step() {
+        if (!this.active) return 0;
 
-    const evenNeighbors = [[-1,0],[-1,-1],[0,-1],[0,1],[1,0],[1,-1]];
-    const oddNeighbors  = [[-1,1],[-1,0],[0,-1],[0,1],[1,1],[1,0]];
-    const angles = [Math.PI/6, 5*Math.PI/6, Math.PI, 0, -Math.PI/6, -5*Math.PI/6];
-    
-    const p0 = 0.58;
-    const c1 = 0.045, c2 = 0.131, aSlope = 0.078;
+        const newState = this.stateGrid.map(r => new Uint8Array(r));
+        let stillActive = false;
+        let burningCells = 0;
 
-    for (let step = 0; step < steps; step++) {
-        const newState = stateGrid.map(r => new Uint8Array(r));
-        const newFire = fireGrid.map(r => new Uint8Array(r));
-        let active = false;
+        const evenNeighbors = [[-1,0],[-1,-1],[0,-1],[0,1],[1,0],[1,-1]];
+        const oddNeighbors  = [[-1,1],[-1,0],[0,-1],[0,1],[1,1],[1,0]];
+        const angles = [Math.PI/6, 5*Math.PI/6, Math.PI, 0, -Math.PI/6, -5*Math.PI/6];
+        
+        const p0 = 0.58;
+        const c1 = 0.045, c2 = 0.131;
 
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                if (stateGrid[r][c] !== 1) continue;
+        for (let r = 0; r < MAP_ROWS; r++) {
+            for (let c = 0; c < MAP_COLS; c++) {
+                if (this.stateGrid[r][c] !== 1) continue;
                 
                 newState[r][c] = 2; // Burn out
-                const currentFireId = fireGrid[r][c];
+                this.burnedCount++;
 
                 const nbrs = (r % 2 === 1) ? oddNeighbors : evenNeighbors;
                 for (let i = 0; i < 6; i++) {
                     const nr = r + nbrs[i][0];
                     const nc = c + nbrs[i][1];
                     
-                    if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
-                    if (stateGrid[nr][nc] !== 0) continue; // already burning or burned
+                    if (nr < 0 || nr >= MAP_ROWS || nc < 0 || nc >= MAP_COLS) continue;
+                    if (this.stateGrid[nr][nc] !== 0) continue;
                     
-                    const bDef = getBiomeDef(biomeGrid[nr][nc]);
-                    if (bDef.pVeg < 0) continue; // Rock doesn't burn
+                    const bDef = this.getBiomeDef(this.biomeGrid[nr][nc]);
+                    if (bDef.pVeg < 0) continue;
 
                     const angle = angles[i];
-                    const pw = Math.exp(windSpeed * (c1 + c2 * (Math.cos(angle) - 1)));
-                    const ps = Math.exp(aSlope * Math.tan(slope * Math.PI/180) * Math.sin(angle));
-                    const pBurn = Math.min(p0 * (1 + bDef.pVeg) * pw * ps, 0.99);
+                    const pw = Math.exp(this.def.wind * (c1 + c2 * (Math.cos(angle) - 1)));
+                    const pBurn = Math.min(p0 * (1 + bDef.pVeg) * pw, 0.99);
 
-                    // Added a bit of stochasticity
                     if (Math.random() < pBurn) {
                         newState[nr][nc] = 1;
-                        newFire[nr][nc] = currentFireId;
-                        active = true;
+                        stillActive = true;
+                        burningCells++;
                     }
                 }
             }
         }
 
-        stateGrid = newState;
-        fireGrid = newFire;
-        frames.push({
-            state: stateGrid.map(r => new Uint8Array(r)),
-            fire: fireGrid.map(r => new Uint8Array(r))
-        });
-
-        if (!active) break; // Fire stopped
+        this.stateGrid = newState;
+        this.active = stillActive;
+        this.updateMeshes();
+        
+        return burningCells;
     }
 
-    return frames;
-}
+    updateMeshes() {
+        for (let r=0; r<MAP_ROWS; r++) {
+            for (let c=0; c<MAP_COLS; c++) {
+                const state = this.stateGrid[r][c];
+                const mesh = this.meshes[r][c];
+                const mat = mesh.material;
+                const orig = mesh.userData;
 
-// ===== Rendering & UI =====
-function updateLeaderboard(frameData) {
-    if (activeMode !== 'multi') return;
+                if (state === 0) continue;
 
-    const counts = {};
-    IGNITION_ZONES.forEach(z => counts[z.id] = 0);
-
-    // Count burned/burning cells per fire ID
-    for (let r=0; r<ROWS; r++) {
-        for (let c=0; c<COLS; c++) {
-            if (frameData.state[r][c] > 0) {
-                counts[frameData.fire[r][c]]++;
+                if (state === 1) {
+                    mat.color.lerp(COLOR_BURNING, 0.3);
+                    mat.emissive = COLOR_BURNING_EMISSIVE;
+                    mat.emissiveIntensity = 1.0;
+                    mesh.scale.y += (orig.origHeight * 1.5 - mesh.scale.y) * 0.3;
+                } else if (state === 2) {
+                    mat.color.lerp(COLOR_BURNED, 0.3);
+                    mat.emissiveIntensity = 0;
+                    mesh.scale.y += (0.05 - mesh.scale.y) * 0.3;
+                }
             }
         }
     }
+}
 
-    // Sort zones by damage
-    const sortedZones = IGNITION_ZONES.map(z => ({
-        ...z,
-        damage: counts[z.id] || 0
-    })).sort((a, b) => b.damage - a.damage);
+// ===== Logic =====
+const regions = REGIONS.map(def => new RegionSim(def));
+let simRunning = false;
+let currentStep = 0;
 
-    const maxDamage = Math.max(1, sortedZones[0].damage);
+function runAll() {
+    document.getElementById('result-modal').classList.remove('visible');
+    document.getElementById('btn-run').style.display = 'none';
+    
+    regions.forEach(r => { r.reset(); r.ignite(); });
+    simRunning = true;
+    currentStep = 0;
+}
 
-    let html = '';
-    sortedZones.forEach(z => {
-        const pct = (z.damage / maxDamage) * 100;
-        let riskColor = '#444';
-        let riskText = 'Low';
-        if (z.damage > 800) { riskColor = '#ff3333'; riskText = 'EXTREME'; }
-        else if (z.damage > 300) { riskColor = '#ff9900'; riskText = 'HIGH'; }
-        else if (z.damage > 50) { riskColor = '#f7c948'; riskText = 'MODERATE'; }
+function showResults() {
+    const gridEl = document.getElementById('risk-grid');
+    gridEl.innerHTML = '';
 
-        html += `
-            <div class="leaderboard-item" style="border-left-color: ${z.color}">
-                <div class="l-title">
-                    <span style="color: ${z.color}; font-weight: 600;">${z.name}</span>
-                    <span class="risk-badge" style="background: ${riskColor}33; color: ${riskColor}">${riskText}</span>
-                </div>
-                <div class="l-value">${z.damage} <span style="font-size: 10px; color: #888; font-weight: 400;">cells destroyed</span></div>
-                <div class="l-bar-bg">
-                    <div class="l-bar-fill" style="width: ${pct}%; background: ${z.color}"></div>
-                </div>
+    const totalCells = MAP_ROWS * MAP_COLS;
+
+    regions.forEach(r => {
+        const pct = (r.burnedCount / totalCells) * 100;
+        
+        let riskClass, riskText;
+        if (pct > 40) {
+            riskClass = 'risk-ext'; // RED
+            riskText = 'Extreme Danger';
+        } else if (pct > 10) {
+            riskClass = 'risk-mod'; // ORANGE
+            riskText = 'Moderate Risk';
+        } else {
+            riskClass = 'risk-low'; // BLUE
+            riskText = 'Low Risk';
+        }
+
+        gridEl.innerHTML += `
+            <div class="zone-card ${riskClass}">
+                <h3>${r.def.name}</h3>
+                <div class="burn-stat">${pct.toFixed(1)}%</div>
+                <div style="font-size: 11px; color:#888; margin-bottom: 12px;">Area Burned</div>
+                <div class="risk-label">${riskText}</div>
             </div>
         `;
     });
 
-    document.getElementById('leaderboard-container').innerHTML = html;
+    document.getElementById('result-modal').classList.add('visible');
+    document.getElementById('btn-run').style.display = 'block';
+    document.getElementById('btn-run').textContent = "Re-Run Forecast";
 }
 
-function updateGrid(frameData) {
-    let burningCount = 0;
-
-    for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-            const state = frameData.state[r][c];
-            const fireId = frameData.fire[r][c];
-            const mesh = hexMeshes[r][c];
-            const mat = mesh.material;
-            const orig = mesh.userData;
-
-            let targetHeight = orig.origHeight;
-            let targetColor = orig.origColor;
-
-            if (state === 0) {
-                mat.emissiveIntensity = 0;
-            } else if (state === 1) {
-                targetHeight = orig.origHeight * 1.5;
-                
-                // If multi-mode, color the fire by its zone color to track it
-                if (activeMode === 'multi' && fireId > 0) {
-                    const zone = IGNITION_ZONES.find(z => z.id === fireId);
-                    if (zone) {
-                        targetColor = new THREE.Color(zone.color);
-                        mat.emissive = new THREE.Color(zone.color);
-                    }
-                } else {
-                    targetColor = COLOR_BURNING;
-                    mat.emissive = COLOR_BURNING_EMISSIVE;
-                }
-                mat.emissiveIntensity = 1.0;
-                burningCount++;
-            } else if (state === 2) {
-                targetHeight = 0.05; // burned down
-                targetColor = COLOR_BURNED;
-                mat.emissiveIntensity = 0;
-            }
-
-            mat.color.lerp(targetColor, 0.4);
-            mesh.scale.y += (targetHeight - mesh.scale.y) * 0.3;
-        }
-    }
-
-    pointLight.intensity = Math.min(burningCount * 0.5, 100);
-    document.getElementById('step-display').textContent = `Step ${currentFrame}`;
-    
-    if (activeMode === 'multi') {
-        updateLeaderboard(frameData);
-    }
-}
-
-// ===== Control Flow =====
-async function startScenario(mode) {
-    document.getElementById('loading').classList.remove('hidden');
-    
-    // Give UI time to paint loading screen
-    await new Promise(r => setTimeout(r, 100));
-
-    activeMode = mode;
-    generateTerrain();
-    buildGrid();
-
-    let ignitions = [];
-    if (mode === 'single') {
-        document.getElementById('panel-title').textContent = "Single Burn Stats";
-        document.getElementById('leaderboard-container').innerHTML = `
-            <div style="color: #aaa; font-size: 13px; margin-top: 20px;">
-                Observing physical spread across heterogeneous terrain. 
-                Switch to 6-Point Scan to evaluate regional risk profiles.
-            </div>
-        `;
-        // Ignite center
-        ignitions = [{ r: Math.floor(ROWS/2), c: Math.floor(COLS/2), id: 1 }];
-    } else {
-        document.getElementById('panel-title').textContent = "6-Zone Risk Analysis";
-        ignitions = IGNITION_ZONES;
-    }
-
-    simData = runSimulation(ignitions, 150, 8.0, 10.0);
-    currentFrame = 0;
-    playing = true;
-    
-    document.getElementById('btn-play').classList.add('active');
-    document.getElementById('btn-pause').classList.remove('active');
-    
-    if (mode === 'single') {
-        document.getElementById('btn-single').classList.add('special');
-        document.getElementById('btn-multi').classList.remove('special');
-    } else {
-        document.getElementById('btn-multi').classList.add('special');
-        document.getElementById('btn-single').classList.remove('special');
-    }
-
-    document.getElementById('loading').classList.add('hidden');
-}
-
-// ===== Events =====
-document.getElementById('btn-play').addEventListener('click', () => {
-    playing = true;
-    document.getElementById('btn-play').classList.add('active');
-    document.getElementById('btn-pause').classList.remove('active');
+document.getElementById('btn-run').addEventListener('click', runAll);
+document.getElementById('btn-close-modal').addEventListener('click', () => {
+    document.getElementById('result-modal').classList.remove('visible');
 });
-
-document.getElementById('btn-pause').addEventListener('click', () => {
-    playing = false;
-    document.getElementById('btn-pause').classList.add('active');
-    document.getElementById('btn-play').classList.remove('active');
-});
-
-document.getElementById('btn-reset').addEventListener('click', () => {
-    currentFrame = 0;
-    playing = true;
-    document.getElementById('btn-play').classList.add('active');
-    document.getElementById('btn-pause').classList.remove('active');
-});
-
-document.getElementById('btn-single').addEventListener('click', () => startScenario('single'));
-document.getElementById('btn-multi').addEventListener('click', () => startScenario('multi'));
 
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -723,13 +550,20 @@ function animate() {
     requestAnimationFrame(animate);
     controls.update();
 
-    if (simData && playing) {
+    if (simRunning) {
         tickCounter++;
-        if (tickCounter >= speed) {
+        if (tickCounter > 2) { // Speed control
             tickCounter = 0;
-            if (currentFrame < simData.length) {
-                updateGrid(simData[currentFrame]);
-                currentFrame++;
+            
+            let totalBurning = 0;
+            regions.forEach(r => { totalBurning += r.step(); });
+            
+            pointLight.intensity = Math.min(totalBurning * 0.2, 100);
+            
+            currentStep++;
+            if (currentStep >= TOTAL_STEPS || totalBurning === 0) {
+                simRunning = false;
+                setTimeout(showResults, 1000); // Wait 1 sec then show popup
             }
         }
     }
@@ -738,7 +572,7 @@ function animate() {
 }
 
 // Start
-startScenario('multi').then(() => animate());
+animate();
 </script>
 </body>
 </html>
